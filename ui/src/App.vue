@@ -1,7 +1,13 @@
 <template>
     <div class="container">
-        <h1>Callsign 🛰️</h1>
-        <button @click="loadJson">Load OpenAPI JSON</button>
+        <h1 class="text-5xl">Callsign 🛰️</h1>
+        <!-- <button class="bg-vs-bbg" @click="loadJson">Load OpenAPI JSON</button> -->
+
+        <Btn @click="loadJson">Load OpenAPI JSON</Btn>
+
+        <div class="bg-bg">
+            <p class="text-bg">test</p>
+        </div>
         <div id="output">
             <pre v-if="!paths">{"waiting": true}</pre>
             <div v-else>
@@ -20,6 +26,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import Btn from '@/components/Btn.vue';
 
 const paths = ref<Record<string, Record<string, { summary?: string }>> | null>(null);
 
@@ -42,26 +49,27 @@ onMounted(() => {
 
 <style scoped>
 .container {
-    font-family: sans-serif;
+    /* font-family: sans-serif; */
     padding: 1rem;
-    background: #1e1e1e;
-    color: white;
+    /* background: #1e1e1e;
+    color: white; */
 }
 
-button {
+/* button {
     background: #007acc;
     color: white;
     padding: 0.5rem 1rem;
     border: none;
     margin-bottom: 1rem;
+    border-radius: 4px;
     cursor: pointer;
-}
+} */
 
-pre {
+/* pre {
     background: #2d2d2d;
     padding: 1rem;
     overflow: auto;
-}
+} */
 
 .route-line {
     margin-bottom: 0.5rem;

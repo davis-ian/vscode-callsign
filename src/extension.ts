@@ -11,18 +11,10 @@ export function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "callsign" is now active!');
 
-    // // The command has been defined in the package.json file
-    // // Now provide the implementation of the command with registerCommand
-    // // The commandId parameter must match the command field in package.json
-    // const disposable = vscode.commands.registerCommand('callsign.helloWorld', () => {
-    // 	// The code you place here will be executed every time your command is executed
-    // 	// Display a message box to the user
-    // 	vscode.window.showInformationMessage('Hello World from callsign!');
-    // });
-
     let disposable = vscode.commands.registerCommand('callsign.openPanel', () => {
         const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
             enableScripts: true,
+            retainContextWhenHidden: true,
         });
         panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
         // listen for button clicks from the webview
@@ -43,12 +35,6 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(disposable);
 }
 
-// function getWebViewContent(context: vscode.ExtensionContext): string {
-//     // const filePath = path.join(context.extensionPath, 'media', 'webview.html');
-//     // return fs.readFileSync(filePath, 'utf8');
-//     const filePath = path.join(context.extensionPath, 'ui-dist', 'index.html');
-//     return fs.readFileSync(filePath, 'utf8');
-// }
 export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
     const isDev = process.env.NODE_ENV === 'development';
 
