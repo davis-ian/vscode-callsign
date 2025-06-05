@@ -50,6 +50,22 @@ export function activate(context: vscode.ExtensionContext) {
 //     return fs.readFileSync(filePath, 'utf8');
 // }
 export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
+    const isDev = process.env.NODE_ENV === 'development';
+
+    console.log('IS DEV: ', isDev);
+    if (isDev) {
+        // Just load dev server via iframe
+        return /* html */ `
+      <!DOCTYPE html>
+      <html lang="en">
+      <body style="padding:0; margin:0;">
+        <iframe src="http://localhost:5173" style="width:100vw; height:100vh; border:0;" />
+      </body>
+      </html>
+    `;
+    }
+
+    // --- Production: Load from built files in ui-dist ---
     const distPath = vscode.Uri.joinPath(extensionUri, 'ui-dist');
     const indexPath = vscode.Uri.joinPath(distPath, 'index.html');
 
