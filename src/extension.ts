@@ -54,15 +54,7 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 
     console.log('IS DEV: ', isDev);
     if (isDev) {
-        // Just load dev server via iframe
-        return /* html */ `
-      <!DOCTYPE html>
-      <html lang="en">
-      <body style="padding:0; margin:0;">
-        <iframe src="http://localhost:5173" style="width:100vw; height:100vh; border:0;" />
-      </body>
-      </html>
-    `;
+        return getDevServerHtml();
     }
 
     // --- Production: Load from built files in ui-dist ---
@@ -83,3 +75,24 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
+
+function getDevServerHtml() {
+    // Just load dev server
+    return /* html */ `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <title>Callsign (Dev)</title>
+            </head>
+            <body>
+            <div id="app"></div>
+            <script>
+
+            </script>
+            <script type="module" src="http://localhost:5173/src/main.ts"></script>
+            </body>
+            </html>
+            `;
+}
