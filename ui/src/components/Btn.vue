@@ -44,3 +44,4 @@ const variantClass =
     transition: all 0.2s ease;
 }
 </style>
+''

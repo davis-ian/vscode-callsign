@@ -9,7 +9,7 @@ import * as fs from 'fs';
 export function activate(context: vscode.ExtensionContext) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "callsign" is now active!');
+    console.log('Callsign extension activated');
 
     let disposable = vscode.commands.registerCommand('callsign.openPanel', () => {
         const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
@@ -19,14 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
         panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
         // listen for button clicks from the webview
         panel.webview.onDidReceiveMessage(
-            message => {
-                if (message.command === 'loadJson') {
-                    console.log('load json HEARD');
-                    const jsonPath = path.join(context.extensionPath, 'src', 'swagger-test.json');
-                    const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-                    panel.webview.postMessage({ command: 'showJson', json: jsonData });
-                }
-            },
+            message => handleMessage(message, panel, context),
             undefined,
             context.subscriptions,
         );
@@ -61,6 +54,45 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
+
+function handleMessage(message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    switch (message.command) {
+        case 'loadJson':
+            handleLoadJson(message, panel, context);
+            break;
+        default:
+            panel.webview.postMessage({ command: 'error', error: 'Unknown command' });
+    }
+}
+
+function handleLoadJson(message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    if (message.type === 'file' && message.content) {
+        try {
+            const jsonData = JSON.parse(message.content);
+            panel.webview.postMessage({ command: 'showJson', json: jsonData });
+        } catch (err) {
+            panel.webview.postMessage({ command: 'error', error: 'Invalid JSON file content' });
+        }
+    } else if (message.type === 'url' && message.url) {
+        console.log('loadJson command heard');
+        fetch(message.url)
+            .then(res => res.json())
+            .then(jsonData => {
+                panel.webview.postMessage({ command: 'showJson', json: jsonData });
+            })
+            .catch(() => {
+                panel.webview.postMessage({ command: 'error', error: 'Failed to fetch JSON from URL' });
+            });
+    } else {
+        const defaultPath = path.join(context.extensionPath, 'src', 'swagger-test.json');
+        try {
+            const jsonData = JSON.parse(fs.readFileSync(defaultPath, 'utf8'));
+            panel.webview.postMessage({ command: 'showJson', json: jsonData });
+        } catch (err) {
+            panel.webview.postMessage({ command: 'error', error: 'Failed to read default JSON file' });
+        }
+    }
+}
 
 function getDevServerHtml() {
     // Just load dev server

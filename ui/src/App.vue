@@ -3,20 +3,18 @@
         <h1 class="text-5xl">Callsign 🛰️</h1>
         <!-- <button class="bg-vs-bbg" @click="loadJson">Load OpenAPI JSON</button> -->
 
-        <Btn @click="loadJson">Load OpenAPI JSON</Btn>
+        <Btn class="my-4" @click="loadJsonFromUrl">Load OpenAPI JSON</Btn>
 
-        <div class="bg-bg">
-            <p class="text-bg">test</p>
-        </div>
-        <div id="output">
+        <div class="my-4" id="output">
             <pre v-if="!paths">{"waiting": true}</pre>
             <div v-else>
-                <div v-for="(methods, route) in paths" :key="route" class="route-block">
-                    <div v-for="(details, method) in methods" :key="method" class="route-line">
-                        <code
-                            ><strong>{{ method.toUpperCase() }}</strong> <span>{{ route }}</span> —
-                            {{ details.summary || '' }}</code
-                        >
+                <div v-for="group in groups" :key="group.tag" class="mb-6">
+                    <h2 class="text-2xl font-bold mb-2">{{ group.tag }}</h2>
+
+                    <div v-for="(methods, route) in group.routes" :key="route" class="ml-4">
+                        <div v-for="(details, method) in methods" :key="method" class="mb-2">
+                            <RouteRow :method="method" :route="route" :details="details" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -27,21 +25,67 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import Btn from '@/components/Btn.vue';
+import RouteRow from '@/components/RouteRow.vue';
 
 const paths = ref<Record<string, Record<string, { summary?: string }>> | null>(null);
+const groups = ref<GroupedRoutes[]>(null);
 
-const vscode = (window as any).acquireVsCodeApi();
+type GroupedRoutes = {
+    tag: string;
+    routes: Record<string, Record<string, any>>;
+};
 
-function loadJson() {
-    console.log('Load Json CLICKED');
-    vscode.postMessage({ command: 'loadJson' });
+function organizePathsByTag(rawPaths: Record<string, any>): GroupedRoutes[] {
+    const groupsMap: Record<string, GroupsRoutes> = {};
+
+    for (const [route, operations] of Object.entries(rawPaths)) {
+        for (const method in operations) {
+            const operation = operations[method];
+            const tag = operation.tags?.[0] || 'Uncategorized';
+
+            if (!groupsMap[tag]) {
+                groupsMap[tag] = { tag, routes: {} };
+            }
+
+            const groupRoutes = groupsMap[tag].routes;
+
+            if (!groupRoutes[route]) {
+                groupRoutes[route] = {};
+            }
+
+            groupRoutes[route][method] = operation;
+        }
+    }
+    return Object.values(groupsMap);
+}
+
+let vscode: any;
+
+function loadJsonFromUrl() {
+    console.log('Loading JSON from remote URL...');
+    if (!vscode) {
+        vscode = (window as any).acquireVsCodeApi();
+    }
+
+    vscode.postMessage({
+        command: 'loadJson',
+        type: 'url',
+        url: 'https://api-develop.memoryshare.com/internal/swagger.json',
+    });
 }
 
 onMounted(() => {
+    if (!vscode) {
+        vscode = (window as any).acquireVsCodeApi();
+    }
+
     window.addEventListener('message', event => {
         const message = event.data;
         if (message.command === 'showJson') {
             paths.value = message.json.paths || {};
+
+            groups.value = organizePathsByTag(paths.value);
+            console.log(groups.value, 'groups');
         }
     });
 });
@@ -49,29 +93,6 @@ onMounted(() => {
 
 <style scoped>
 .container {
-    /* font-family: sans-serif; */
     padding: 1rem;
-    /* background: #1e1e1e;
-    color: white; */
-}
-
-/* button {
-    background: #007acc;
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    margin-bottom: 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-} */
-
-/* pre {
-    background: #2d2d2d;
-    padding: 1rem;
-    overflow: auto;
-} */
-
-.route-line {
-    margin-bottom: 0.5rem;
 }
 </style>
