@@ -1,42 +1,32 @@
 <template>
     <div class="container">
         <h1 class="text-5xl">Callsign 🛰️</h1>
-        <!-- <button class="bg-vs-bbg" @click="loadJson">Load OpenAPI JSON</button> -->
 
         <Btn class="my-4" @click="loadJsonFromUrl">Load OpenAPI JSON</Btn>
 
         <div class="my-4" id="output">
             <pre v-if="!paths">{"waiting": true}</pre>
             <div v-else>
-                <div v-for="group in groups" :key="group.tag" class="mb-6">
-                    <h2 class="text-2xl font-bold mb-2">{{ group.tag }}</h2>
-
-                    <div v-for="(methods, route) in group.routes" :key="route" class="ml-4">
-                        <div v-for="(details, method) in methods" :key="method" class="mb-2">
-                            <RouteRow :method="method" :route="route" :details="details" />
-                        </div>
-                    </div>
-                </div>
+                <RouteList :groups="groups" />
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, provide } from 'vue';
 import Btn from '@/components/Btn.vue';
-import RouteRow from '@/components/RouteRow.vue';
+import RouteList from './components/RouteList.vue';
+import { type GroupedRoutes } from '@/types.ts';
 
+const fullSpec = ref<Record<string, any> | null>(null);
 const paths = ref<Record<string, Record<string, { summary?: string }>> | null>(null);
-const groups = ref<GroupedRoutes[]>(null);
+const groups = ref<GroupedRoutes[]>([]);
 
-type GroupedRoutes = {
-    tag: string;
-    routes: Record<string, Record<string, any>>;
-};
+provide('openApiSpec', fullSpec);
 
 function organizePathsByTag(rawPaths: Record<string, any>): GroupedRoutes[] {
-    const groupsMap: Record<string, GroupsRoutes> = {};
+    const groupsMap: Record<string, GroupedRoutes> = {};
 
     for (const [route, operations] of Object.entries(rawPaths)) {
         for (const method in operations) {
@@ -83,9 +73,12 @@ onMounted(() => {
         const message = event.data;
         if (message.command === 'showJson') {
             paths.value = message.json.paths || {};
+            fullSpec.value = message.json;
 
-            groups.value = organizePathsByTag(paths.value);
-            console.log(groups.value, 'groups');
+            if (paths.value) {
+                groups.value = organizePathsByTag(paths.value);
+                console.log(groups.value, 'groups');
+            }
         }
     });
 });
