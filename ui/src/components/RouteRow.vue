@@ -3,8 +3,8 @@
         <div @click="toggleExpand" class="p-3 cursor-pointer">
             <span class="font-bold text-vs-bfg mr-2">{{ props.method.toUpperCase() }}</span>
             <span class="text-vs-ifg">{{ props.route }}</span>
-            —
-            <span class="text-vs-tfg italic">{{ props.details?.summary }}</span>
+
+            <span v-if="props.details?.summary" class="text-vs-tfg italic"> — {{ props.details?.summary }}</span>
         </div>
 
         <div v-if="expanded" class="border-t border-vs-border p-3">

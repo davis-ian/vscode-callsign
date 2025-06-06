@@ -1,8 +1,8 @@
 <template>
     <div class="container">
-        <h1 class="text-5xl">Callsign 🛰️</h1>
+        <h1 class="text-5xl mb-6">Callsign 🛰️</h1>
 
-        <Btn class="my-4" @click="loadJsonFromUrl">Load OpenAPI JSON</Btn>
+        <!-- <Btn class="my-4" @click="loadJsonFromUrl">Load OpenAPI JSON</Btn> -->
 
         <input
             v-model="search"
