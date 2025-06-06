@@ -17,8 +17,17 @@
                 </div>
                 <div class="my-2 flex" v-for="param in props.details?.parameters">
                     <div class="mr-4">
-                        <p class="text-xs">{{ param?.schema?.type }}({{ param?.schema?.format }})</p>
-                        <p class="font-bold">{{ param.required ? '*' : '' }}{{ param.name }}</p>
+                        <p class="text-xs">
+                            <span
+                                class="bg-gray-800 text-gray-200 rounded px-1 py-0.5 text-[10px] uppercase tracking-wider"
+                            >
+                                {{ param?.schema?.type }}
+                            </span>
+                            <span v-if="param?.schema?.format">({{ param.schema.format }})</span>
+                        </p>
+                        <p class="font-bold">
+                            <span v-if="param.required" class="text-red-500">*</span>{{ param.name }}
+                        </p>
                     </div>
 
                     <TextInput v-model="paramsInput[param.name]" />
@@ -32,7 +41,9 @@
                 <pre
                     class="bg-vs-pbg rounded overflow-x-auto p-2 text-xs"
                 ><code>{{ JSON.stringify(requestBodyExample, null, 2) }}</code></pre>
-
+                <!-- <textarea class="w-full bg-vs-pbg text-sm p-4 rounded leading-snug font-mono" rows="6" readonly>{{
+                    JSON.stringify(requestBodyExample, null, 2)
+                }}</textarea> -->
                 <p class="text-xs italic mt-2 text-gray-400" v-if="schemaRef">Schema: {{ schemaRef }}</p>
             </div>
 

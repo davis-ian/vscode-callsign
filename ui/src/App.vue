@@ -4,6 +4,13 @@
 
         <Btn class="my-4" @click="loadJsonFromUrl">Load OpenAPI JSON</Btn>
 
+        <input
+            v-model="search"
+            type="text"
+            placeholder="Search routes..."
+            class="w-full p-2 mb-4 rounded border border-vs-border bg-vs-ibg text-vs-fg"
+        />
+
         <div class="my-4" id="output">
             <pre v-if="!paths">{"waiting": true}</pre>
             <div v-else>
@@ -14,15 +21,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, provide } from 'vue';
+import { ref, onMounted, provide, computed } from 'vue';
 import Btn from '@/components/Btn.vue';
 import RouteList from './components/RouteList.vue';
 import { type GroupedRoutes } from '@/types.ts';
 
 const fullSpec = ref<Record<string, any> | null>(null);
 const paths = ref<Record<string, Record<string, { summary?: string }>> | null>(null);
-const groups = ref<GroupedRoutes[]>([]);
+const search = ref('');
 
+const groups = computed(() => {
+    if (!paths.value) return [];
+
+    const searchTerm = search.value.toLowerCase();
+
+    if (searchTerm) {
+        // Filtered subset of paths
+        const filteredPaths = Object.fromEntries(
+            Object.entries(paths.value).filter(([route, methods]) => {
+                if (route.toLowerCase().includes(searchTerm)) return true;
+
+                // Also search method summaries
+                return Object.values(methods).some(op => op.summary?.toLowerCase().includes(searchTerm));
+            }),
+        );
+
+        return organizePathsByTag(filteredPaths);
+    }
+    return organizePathsByTag(paths.value);
+});
 provide('openApiSpec', fullSpec);
 
 function organizePathsByTag(rawPaths: Record<string, any>): GroupedRoutes[] {
@@ -73,12 +100,8 @@ onMounted(() => {
         const message = event.data;
         if (message.command === 'showJson') {
             paths.value = message.json.paths || {};
+            console.log(paths.value, 'paths @ mount');
             fullSpec.value = message.json;
-
-            if (paths.value) {
-                groups.value = organizePathsByTag(paths.value);
-                console.log(groups.value, 'groups');
-            }
         }
     });
 });
