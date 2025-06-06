@@ -10,6 +10,8 @@
         <div v-if="expanded" class="border-t border-vs-border p-3">
             <p class="mb-4" v-if="details?.description">{{ props.details.description }}</p>
 
+            <Btn @click="toggleEditing">{{ editing ? 'Cancel' : 'Try it out' }}</Btn>
+
             <div class="my-6">
                 <div class="my-4">
                     <p class="text-xl">Params</p>
@@ -30,20 +32,29 @@
                         </p>
                     </div>
 
-                    <TextInput v-model="paramsInput[param.name]" />
+                    <TextInput v-model="paramInputs[param.name]" />
                 </div>
-            </div>
-            <div class="my-4">
-                <p class="text-xl">Request Body</p>
-                <div class="border-t"></div>
+                <div v-if="editing && response">
+                    <p>Response Body</p>
+                    <div class="bg-black border rounded p-3 my-2">
+                        {{ response }}
+                    </div>
+                </div>
+                <Btn v-if="editing" @click="sendRequest">Send</Btn>
             </div>
             <div v-if="details.requestBody">
+                <div class="my-4">
+                    <p class="text-xl">Request Body</p>
+                    <div class="border-t"></div>
+                </div>
                 <pre
                     class="bg-vs-pbg rounded overflow-x-auto p-2 text-xs"
                 ><code>{{ JSON.stringify(requestBodyExample, null, 2) }}</code></pre>
-                <!-- <textarea class="w-full bg-vs-pbg text-sm p-4 rounded leading-snug font-mono" rows="6" readonly>{{
-                    JSON.stringify(requestBodyExample, null, 2)
-                }}</textarea> -->
+                <textarea
+                    v-model="bodyInput"
+                    class="w-full p-2 border rounded bg-vs-ibg border-vs-border font-mono text-sm"
+                    rows="6"
+                ></textarea>
                 <p class="text-xs italic mt-2 text-gray-400" v-if="schemaRef">Schema: {{ schemaRef }}</p>
             </div>
 
@@ -56,10 +67,6 @@
                     <p>{{ code }} - {{ resp?.description }}</p>
                 </div>
             </div>
-            <!--
-            <div class="mt-4">
-                {{ details }}
-            </div> -->
         </div>
     </div>
 </template>
@@ -67,8 +74,12 @@
 <script setup lang="ts">
 import { inject, computed, ref } from 'vue';
 import TextInput from './TextInput.vue';
+import Btn from '@/components/Btn.vue';
 
-const paramsInput = ref<Record<string, string>>({});
+const hasBody = computed(() => props.details?.requestBody?.content?.['application/json']);
+const response = ref('');
+const bodyInput = ref('');
+const paramInputs = ref<Record<string, string>>({});
 const openApiSpec = inject<Record<string, any> | null>('openApiSpec');
 const components = computed(() => openApiSpec?.value?.components?.schemas || {});
 
@@ -93,11 +104,16 @@ function toggleExpand() {
 
     if (expanded.value && props.details?.parameters) {
         for (const param of props.details.parameters) {
-            if (!(param.name in paramsInput.value)) {
-                paramsInput.value[param.name] = '';
+            if (!(param.name in paramInputs.value)) {
+                paramInputs.value[param.name] = '';
             }
         }
     }
+}
+
+const editing = ref(false);
+function toggleEditing() {
+    editing.value = !editing.value;
 }
 
 const requestBodyExample = computed(() => {
@@ -153,6 +169,42 @@ function resolveRef(ref: string, components: any): any {
     }
 
     return null;
+}
+
+async function sendRequest() {
+    const path = props.route.replace(/{(.*?)}/g, (_, name) => paramInputs.value[name] || `{${name}}`);
+    const url = `https://api-develop.memoryshare.com${path}`;
+
+    const init: RequestInit = {
+        method: props.method.toUpperCase(),
+        headers: { 'Content-Type': 'application/json' },
+    };
+
+    if (hasBody.value && bodyInput.value.trim()) {
+        try {
+            init.body = JSON.stringify(JSON.parse(bodyInput.value));
+        } catch {
+            response.value = '❌ Invalid JSON body';
+            return;
+        }
+    }
+
+    try {
+        const res = await fetch(url, init);
+        let data;
+        const contentType = res.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+            data = await res.json();
+            response.value = JSON.stringify(data, null, 2);
+        } else {
+            data = await res.text();
+            response.value = data;
+        }
+
+        console.log(data, 'parsed response');
+    } catch (err: any) {
+        response.value = `❌ Error: ${err.message}`;
+    }
 }
 </script>
 

@@ -1,6 +1,6 @@
 <template>
     <button
-        class="btn"
+        class="btn cursor-pointer"
         :class="[variantClass, { 'opacity-50 cursor-not-allowed': disabled }]"
         :disabled="disabled"
         @click="handleClick"
