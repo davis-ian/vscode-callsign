@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { AuthService } from './services/AuthService';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -55,10 +56,21 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 // This method is called when your extension is deactivated
 export function deactivate() {}
 
-function handleMessage(message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+async function handleMessage(message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    const authService = new AuthService(context);
     switch (message.command) {
         case 'loadJson':
             handleLoadJson(message, panel, context);
+            break;
+        case 'storeAuth':
+            const { type, name, value } = message.payload;
+            await authService.storeCredential({ name, type }, value);
+            break;
+        case 'getAllCredentials':
+            console.log('getAllCreds HEARD @ extension.ts');
+            const all = authService.getAllCredentials();
+            console.log('all', all);
+            panel.webview.postMessage({ command: 'allCredentials', data: all });
             break;
         default:
             panel.webview.postMessage({ command: 'error', error: 'Unknown command' });
