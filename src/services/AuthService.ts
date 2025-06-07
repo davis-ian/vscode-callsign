@@ -27,26 +27,31 @@ export class AuthService {
      * Store authentication credential securely using VS Code's built-in secrets API
      */
     async storeCredential(credential: Omit<AuthCredential, 'id' | 'createdAt'>, value: string): Promise<string> {
-        const id = this.generateId();
+        const credentials = await this.getCredentialMetadata();
+        const now = new Date();
+
+        // Remove any existing credential of the same type
+        const filtered = credentials.filter(c => c.type !== credential.type);
+        const existing = credentials.find(c => c.type === credential.type);
+
+        let id = existing?.id || this.generateId();
+
         const fullCredential: AuthCredential = {
             ...credential,
             id,
-            createdAt: new Date(),
+            createdAt: existing?.createdAt ?? now,
+            lastUsed: now,
         };
 
-        try {
-            // Store the actual token/key in VS Code's encrypted secrets storage
-            await this.context.secrets.store(`auth.${id}`, value);
+        // Store the secret and metadata
+        await this.context.secrets.store(`auth.${id}`, value);
+        await this.context.globalState.update(AuthService.CREDENTIALS_KEY, [...filtered, fullCredential]);
 
-            // Store metadata in regular storage (without the actual secret)
-            await this.saveCredentialMetadata(fullCredential);
+        vscode.window.showInformationMessage(
+            `Authentication "${credential.name}" ${existing ? 'updated' : 'saved'} securely`,
+        );
 
-            vscode.window.showInformationMessage(`Authentication "${credential.name}" saved securely`);
-            return id;
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to store authentication: ${error}`);
-            throw error;
-        }
+        return id;
     }
 
     /**
@@ -63,6 +68,7 @@ export class AuthService {
             }
 
             const value = await this.context.secrets.get(`auth.${id}`);
+
             if (!value) {
                 vscode.window.showWarningMessage(`Authentication "${credential.name}" not found`);
                 return null;
@@ -84,6 +90,21 @@ export class AuthService {
      */
     async getAllCredentials(): Promise<AuthCredential[]> {
         return await this.getCredentialMetadata();
+    }
+
+    /**
+     * Get all stored credential metadata (without actual values)
+     */
+    async clearAllCredentials(): Promise<boolean> {
+        const all = await this.getCredentialMetadata();
+
+        try {
+            await Promise.all(all.map(cred => this.deleteCredential(cred.id)));
+
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     /**

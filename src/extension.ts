@@ -64,13 +64,32 @@ async function handleMessage(message: any, panel: vscode.WebviewPanel, context: 
             break;
         case 'storeAuth':
             const { type, name, value } = message.payload;
+
             await authService.storeCredential({ name, type }, value);
             break;
         case 'getAllCredentials':
-            console.log('getAllCreds HEARD @ extension.ts');
-            const all = authService.getAllCredentials();
-            console.log('all', all);
-            panel.webview.postMessage({ command: 'allCredentials', data: all });
+            const all = await authService.getAllCredentials();
+            try {
+                panel.webview.postMessage({ command: 'allCreds', data: all });
+            } catch (error) {
+                console.log('error posting message', error);
+            }
+            break;
+
+        case 'clearAllCreds':
+            await authService.clearAllCredentials();
+
+            panel.webview.postMessage({ command: 'credsCleared' });
+            break;
+        case 'getCredentialById':
+            const stored = await authService.getCredential(message.id);
+
+            if (stored) {
+                panel.webview.postMessage({
+                    command: 'credentialValue',
+                    data: stored,
+                });
+            }
             break;
         default:
             panel.webview.postMessage({ command: 'error', error: 'Unknown command' });
@@ -86,7 +105,6 @@ function handleLoadJson(message: any, panel: vscode.WebviewPanel, context: vscod
             panel.webview.postMessage({ command: 'error', error: 'Invalid JSON file content' });
         }
     } else if (message.type === 'url' && message.url) {
-        console.log('loadJson command heard');
         fetch(message.url)
             .then(res => res.json())
             .then(jsonData => {

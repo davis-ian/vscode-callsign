@@ -5,7 +5,7 @@
             :type="type"
             :placeholder="placeholder"
             :value="modelValue"
-            @input="$emit('update:modelValue', $event?.target?.value)"
+            @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
             class="bg-[#1e1e1e] border border-white/10 rounded px-3 py-2 text-sm placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
     </label>

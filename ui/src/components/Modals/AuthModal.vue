@@ -27,8 +27,10 @@
                 <template #actions>
                     <div class="flex justify-between w-full">
                         <Btn @click="emit('update:modelValue')" variant="secondary">Close</Btn>
-                        <Btn @click="getAllCreds">Get All</Btn>
-                        <Btn @click="saveHeaders">Save</Btn>
+                        <div class="flex gap-2">
+                            <Btn @click="clearAllCreds">Logout</Btn>
+                            <Btn @click="saveHeaders">Save</Btn>
+                        </div>
                     </div>
                 </template>
             </Card>
@@ -37,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed, inject } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import Modal from '@/components/Modal.vue';
 import TextInput from '@/components/TextInput.vue';
 import Card from '@/components/Card.vue';
@@ -50,27 +52,46 @@ const bearer = ref('');
 const vscode = useVscode();
 
 async function saveHeaders() {
-    const message = {
+    const apiMessage = {
         command: 'storeAuth',
         payload: {
-            name: 'My Key',
-            type: 'bearer',
+            name: 'Api Key',
+            type: 'api-key',
             value: apiKey.value,
         },
     };
 
-    vscode?.postMessage(message);
+    const bearerMessage = {
+        command: 'storeAuth',
+        payload: {
+            name: 'Bearer JWT',
+            type: 'bearer',
+            value: bearer.value,
+        },
+    };
 
-    console.log('AUTH STORED SUCCESSFULLY');
+    await vscode.postMessage(apiMessage);
+    await vscode.postMessage(bearerMessage);
+
     isOpen.value = false;
 }
 
 function getAllCreds() {
     try {
-        console.log(vscode, 'vscode');
         vscode.postMessage({ command: 'getAllCredentials' });
     } catch (error) {
-        console.log(error, 'error @ get all credsx');
+        console.log(error, 'error @ get all creds');
+    }
+}
+
+function clearAllCreds() {
+    try {
+        vscode.postMessage({ command: 'clearAllCreds' });
+
+        apiKey.value = '';
+        bearer.value = '';
+    } catch (error) {
+        console.log(error, 'error @ clear all creds');
     }
 }
 
@@ -93,10 +114,29 @@ onMounted(() => {
     window.addEventListener('message', event => {
         const { command, data } = event.data;
 
-        if (command === 'allCredentials') {
-            console.log('All stored  credentials: ', data);
+        if (command === 'allCreds') {
+            const bearerCred = data.find((x: any) => x.type === 'bearer');
+            const apiKeyCred = data.find((x: any) => x.type === 'api-key');
+
+            if (bearerCred) {
+                vscode.postMessage({ command: 'getCredentialById', id: bearerCred.id });
+            }
+
+            if (apiKeyCred) {
+                vscode.postMessage({ command: 'getCredentialById', id: apiKeyCred.id });
+            }
+        }
+
+        if (command === 'credentialValue') {
+            if (data.credential.type === 'bearer') {
+                bearer.value = data.value;
+            } else if (data.credential.type === 'api-key') {
+                apiKey.value = data.value;
+            }
         }
     });
+
+    getAllCreds();
 });
 </script>
 
