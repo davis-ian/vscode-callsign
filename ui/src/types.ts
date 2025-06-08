@@ -102,3 +102,13 @@ export interface OpenApiRoute {
         summary: string;
     };
 }
+
+export interface RequestSnapshot {
+    id: string;
+    timestamp: string;
+    method: string;
+    path: string;
+    status: number;
+    requestBody?: any;
+    responseBody: any;
+}

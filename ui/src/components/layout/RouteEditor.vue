@@ -82,6 +82,16 @@
                     <p>{{ code }} - {{ resp?.description }}</p>
                 </div>
             </div>
+
+            <div v-if="editing" class="mt-4">
+                <h3 class="text-sm font-bold mb-2">Recent Requests</h3>
+                <ul class="text-xs text-gray-400 space-y-1">
+                    <li v-for="snap in requestHistory" :key="snap.id">
+                        {{ snap.method.toUpperCase() }} {{ snap.path }} — {{ snap.status }}
+                        <span class="opacity-60">({{ new Date(snap.timestamp).toLocaleTimeString() }})</span>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </template>
@@ -97,6 +107,7 @@ import type { AuthHeader, AuthMethod } from '@/types';
 const selectedRoute = useSelectedRoute();
 
 import { sendRequest } from '@/services/RequestService';
+import { useRequestHistory } from '@/composables/useRequestHistory';
 
 onMounted(async () => {
     try {
@@ -144,6 +155,8 @@ const bodyInput = ref('');
 const response = ref<string>('');
 const responseCode = ref<number | null>(null);
 
+const { addSnapshot, requestHistory } = useRequestHistory();
+
 async function initSendRequest() {
     if (!selectedRoute.value) return;
 
@@ -154,6 +167,16 @@ async function initSendRequest() {
         console.log(result, 'request result');
         responseCode.value = result.status;
         response.value = typeof result.body === 'object' ? JSON.stringify(result.body, null, 2) : result.body;
+
+        addSnapshot({
+            id: crypto.randomUUID?.() || Date.now().toString(),
+            timestamp: new Date().toISOString(),
+            method: selectedRoute.value.method,
+            path: selectedRoute.value.path,
+            status: result.status,
+            requestBody: bodyInput.value,
+            responseBody: result.body,
+        });
     } catch (err: any) {
         console.log(err, 'request error');
         response.value = err.message;

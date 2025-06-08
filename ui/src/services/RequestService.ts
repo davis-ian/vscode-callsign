@@ -19,8 +19,6 @@ export async function sendRequest(
         }
     }
 
-    console.log(queryParams, 'params @  request  service');
-
     // Parse JSON body (if applicable)
     let body: any = null;
     if (hasBody && bodyInput?.trim()) {
@@ -29,7 +27,6 @@ export async function sendRequest(
         } catch (err) {
             throw new Error('Invalid JSON body');
         }
-        console.log(body, 'body @  request  service');
     }
 
     // Replace path params
@@ -44,7 +41,6 @@ export async function sendRequest(
     // Make authenticated request through extension bridge
     const rawParams = { ...paramInputs };
     const result = await extensionBridge.makeAuthenticatedRequest(endpoint, authId || undefined, body, rawParams);
-    console.log(result, 'result @ req service');
 
     return result;
 }
