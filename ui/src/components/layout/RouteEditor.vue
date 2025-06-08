@@ -1,11 +1,9 @@
 <template>
     <div>
-        <!-- <p v-if="selectedRoute">{{ selectedRoute }}</p> -->
-
-        <div v-if="selectedRoute" class="border-t border-vs-border p-3">
+        <div v-if="selectedRoute">
+            <Btn @click="toggleEditing" class="mb-6">{{ editing ? 'Cancel' : 'Try it out' }}</Btn>
+            <p class="mb-4 font-bold text-xl" v-if="selectedRoute.details?.description">{{ selectedRoute.path }}</p>
             <p class="mb-4" v-if="selectedRoute.details?.description">{{ selectedRoute.details.description }}</p>
-
-            <Btn @click="toggleEditing">{{ editing ? 'Cancel' : 'Try it out' }}</Btn>
 
             <div v-if="editing" class="my-4 p-4 border border-vs-border rounded">
                 <div class="mb-4">
@@ -149,6 +147,7 @@ const responseCode = ref<number | null>(null);
 async function initSendRequest() {
     if (!selectedRoute.value) return;
 
+    console.log(selectedRoute.value, 'initing request');
     try {
         const result = await sendRequest(selectedRoute.value, paramInputs.value, selectedAuthId.value, bodyInput.value);
 

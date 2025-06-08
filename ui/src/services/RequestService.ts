@@ -19,6 +19,8 @@ export async function sendRequest(
         }
     }
 
+    console.log(queryParams, 'params @  request  service');
+
     // Parse JSON body (if applicable)
     let body: any = null;
     if (hasBody && bodyInput?.trim()) {
@@ -27,18 +29,22 @@ export async function sendRequest(
         } catch (err) {
             throw new Error('Invalid JSON body');
         }
+        console.log(body, 'body @  request  service');
     }
 
     // Replace path params
     const path = route.path.replace(/{(.+?)}/g, (_match, name) => paramInputs[name] || `{${name}}`);
 
+    console.log(path, 'path @ req service');
     const endpoint = {
         url: `https://api-develop.memoryshare.com${path}`,
         method: route.method,
     };
 
     // Make authenticated request through extension bridge
-    const result = await extensionBridge.makeAuthenticatedRequest(endpoint, authId || undefined, body, paramInputs);
+    const rawParams = { ...paramInputs };
+    const result = await extensionBridge.makeAuthenticatedRequest(endpoint, authId || undefined, body, rawParams);
+    console.log(result, 'result @ req service');
 
     return result;
 }
