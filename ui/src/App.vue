@@ -5,7 +5,8 @@
 <script setup lang="ts">
 import { ref, onMounted, provide } from 'vue';
 import CallsignView from './components/layout/CallsignView.vue';
-import { extensionBridge, type OpenApiSpec } from '@/services/ExtensionBridge';
+import { extensionBridge } from '@/services/ExtensionBridge';
+import type { OpenApiSpec } from './types';
 
 async function loadJsonFromUrl() {
     console.log('Loading JSON from remote URL...');

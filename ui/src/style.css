@@ -13,3 +13,7 @@
     --color-vs-sbg: var(--vscode-status-background);
     --color-border: 'var(--vscode-editorGroup-border)';
 }
+
+code {
+    background-color: transparent;
+}

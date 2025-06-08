@@ -49,14 +49,14 @@
 
                     <TextInput v-model="paramInputs[param.name]" />
                 </div>
-                <div v-if="editing && response">
+                <div v-if="editing && responseCode">
                     <p class="text-xl">Status: {{ responseCode }}</p>
                     <p>Response Body</p>
                     <pre
                         class="bg-vs-pbg rounded overflow-x-auto p-2 text-xs max-h-100 border my-4"
                     ><code>{{ response }}</code></pre>
                 </div>
-                <Btn v-if="editing" @click="sendRequest">Send</Btn>
+                <Btn v-if="editing" @click="initSendRequest">Send</Btn>
             </div>
 
             <div v-if="selectedRoute.details.requestBody">
@@ -89,17 +89,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject, onMounted } from 'vue';
+import { ref, computed, inject, onMounted, watch } from 'vue';
 import TextInput from '@/components/TextInput.vue';
 import Btn from '@/components/Btn.vue';
-import { extensionBridge, type AuthMethod, type AuthHeader } from '@/services/ExtensionBridge';
+import { extensionBridge } from '@/services/ExtensionBridge';
 
 import { useSelectedRoute } from '@/composables/SelectedRouteSymbol';
+import type { AuthHeader, AuthMethod } from '@/types';
 const selectedRoute = useSelectedRoute();
+
+import { sendRequest } from '@/services/RequestService';
 
 onMounted(async () => {
     try {
         availableAuth.value = await extensionBridge.getAvailableAuthMethods();
+        console.log('available auth mounted', availableAuth);
     } catch (err) {
         console.error('Failed to load auth methods:', err);
     }
@@ -124,6 +128,11 @@ function toggleEditing() {
     editing.value = !editing.value;
 }
 
+watch(editing, (newVal: boolean, _oldVal: boolean) => {
+    console.log(newVal, 'editing watcher');
+    console.log(availableAuth, 'available auth');
+});
+
 const paramInputs = ref<Record<string, string>>({});
 const openApiSpec = inject<Record<string, any> | null>('openApiSpec');
 const components = computed(() => openApiSpec?.value?.components?.schemas || {});
@@ -132,109 +141,26 @@ const selectedAuthId = ref<string>('');
 const availableAuth = ref<AuthMethod[]>([]);
 const authPreview = ref<AuthHeader | null>(null);
 
-const hasBody = computed(() => selectedRoute?.value?.details?.requestBody?.content?.['application/json']);
 const bodyInput = ref('');
 
 const response = ref<string>('');
 const responseCode = ref<number | null>(null);
 
-async function sendRequest() {
+async function initSendRequest() {
     if (!selectedRoute.value) return;
 
     try {
-        // Build query params
-        const params: Record<string, string> = {};
-        if (selectedRoute.value.details?.parameters) {
-            selectedRoute.value.details.parameters.forEach((param: any) => {
-                if (paramInputs.value[param.name]) {
-                    params[param.name] = paramInputs.value[param.name];
-                }
-            });
-        }
+        const result = await sendRequest(selectedRoute.value, paramInputs.value, selectedAuthId.value, bodyInput.value);
 
-        // Parse request body
-        let body = null;
-        if (hasBody.value && bodyInput.value.trim()) {
-            try {
-                body = JSON.parse(bodyInput.value);
-            } catch (err) {
-                response.value = '❌ Invalid JSON body';
-                return;
-            }
-        }
-
-        // Replace path parameters
-        const path = selectedRoute.value.route.replace(
-            /{(.+?)}/g,
-            (_match: string, name: string) => paramInputs.value[name] || `{${name}}`,
-        );
-
-        const endpoint = {
-            url: `https://api-develop.memoryshare.com${path}`,
-            method: selectedRoute.value.method,
-        };
-
-        // Make authenticated request through extension bridge
-        const result = await extensionBridge.makeAuthenticatedRequest(
-            endpoint,
-            selectedAuthId.value || undefined,
-            body,
-            params,
-        );
-
+        console.log(result, 'request result');
         responseCode.value = result.status;
-
-        if (typeof result.body === 'object') {
-            response.value = JSON.stringify(result.body, null, 2);
-        } else {
-            response.value = result.body;
-        }
+        response.value = typeof result.body === 'object' ? JSON.stringify(result.body, null, 2) : result.body;
     } catch (err: any) {
-        console.error('Request failed: ', err);
-        response.value = `Error: ${err.message}`;
+        console.log(err, 'request error');
+        response.value = err.message;
         responseCode.value = null;
     }
 }
-
-// async function sendRequestOld() {
-//     const path = selectedRoute.value.replace(
-//         /{(.*?)}/g,
-//         (_: any, name: string | number) => paramInputs.value[name] || `{${name}}`,
-//     );
-//     const url = `https://api-develop.memoryshare.com${path}`;
-
-//     const init: RequestInit = {
-//         method: selectedRoute.value?.method.toUpperCase(),
-//         headers: { 'Content-Type': 'application/json' },
-//     };
-
-//     if (hasBody.value && bodyInput.value.trim()) {
-//         try {
-//             init.body = JSON.stringify(JSON.parse(bodyInput.value));
-//         } catch {
-//             response.value = '❌ Invalid JSON body';
-//             return;
-//         }
-//     }
-
-//     try {
-//         const res = await fetch(url, init);
-//         let data;
-//         const contentType = res.headers.get('content-type');
-//         if (contentType?.includes('application/json')) {
-//             data = await res.json();
-//             response.value = JSON.stringify(data, null, 2);
-//             responseCode.value = res.status;
-//         } else {
-//             data = await res.text();
-//             response.value = data;
-//         }
-
-//         console.log(data, 'parsed response');
-//     } catch (err: any) {
-//         response.value = `❌ Error: ${err.message}`;
-//     }
-// }
 
 const requestBodyExample = computed(() => {
     const schema = selectedRoute.value?.details?.requestBody?.content?.['application/json']?.schema;

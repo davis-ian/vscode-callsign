@@ -142,7 +142,7 @@ export class AuthService {
 
         switch (credential.type) {
             case 'bearer':
-                return { Authorization: `Bearer ${value}` };
+                return { Authorization: `${value.startsWith('Bearer') ? value : 'Bearer ' + value}` };
 
             case 'api-key':
                 const headerName = credential.headerName || 'X-API-Key';

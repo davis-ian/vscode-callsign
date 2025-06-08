@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { AuthService } from './services/AuthService';
-import { json } from 'stream/consumers';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -70,6 +69,8 @@ async function handleMessage(message: any, panel: vscode.WebviewPanel, context: 
                 break;
             case 'storeAuth':
                 const { type, name, value } = payload || message.payload;
+
+                console.log('storing auth @ extension.ts', type, name);
                 await authService.storeCredential({ name, type }, value);
                 data = { success: true };
                 break;
@@ -171,12 +172,46 @@ async function makeAuthenticatedRequest(payload: any, authService: AuthService) 
 
     let responseBody;
 
-    const contentType = response.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-        responseBody = await response.json();
-    } else {
-        responseBody = await response.text();
+    try {
+        const text = await response.text();
+        console.log('Raw response text:', text);
+
+        if (!text || text.trim() === '') {
+            // Empty response - create a meaningful error message
+            if (!response.ok) {
+                responseBody = {
+                    error: `HTTP ${response.status}`,
+                    message: response.statusText || 'Request failed',
+                    status: response.status,
+                };
+            } else {
+                responseBody = null;
+            }
+        } else {
+            // Try to parse as JSON first
+            const contentType = response.headers.get('content-type');
+            if (contentType?.includes('application/json')) {
+                try {
+                    responseBody = JSON.parse(text);
+                } catch (parseError) {
+                    responseBody = text; // Fallback to raw text
+                }
+            } else {
+                responseBody = text;
+            }
+        }
+    } catch (error) {
+        console.error('Error reading response:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        responseBody = {
+            error: 'Failed to read response',
+            message: errorMessage,
+            status: response.status,
+        };
     }
+
+    console.log('Final response body:', responseBody);
 
     return {
         status: response.status,

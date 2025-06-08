@@ -1,55 +1,13 @@
-export interface AuthCredential {
-    id: string;
-    name: string;
-    type: 'bearer' | 'api-key' | 'basic';
-    headerName?: string;
-    description?: string;
-    createdAt: Date;
-    lastUsed?: Date;
-}
-
-export interface StoredAuth {
-    credential: AuthCredential;
-    value: string;
-}
-
-export interface AuthHeader {
-    key: string;
-    value: string;
-}
-
-export interface AuthMethod {
-    id: string;
-    name: string;
-    type: string;
-    displayName: string;
-}
-
-export interface ApiResponse {
-    status: number;
-    statusText: string;
-    headers: Record<string, string>;
-    body: any;
-    timestamp: string;
-}
-
-export interface ApiEndpoint {
-    url: string;
-    method: string;
-}
-
-export interface OpenApiSpec {
-    openapi: string;
-    info: any;
-    paths: Record<string, any>;
-    components?: any;
-}
-
-export interface LoadJsonOptions {
-    type: 'file' | 'url' | 'default';
-    content?: string;
-    url?: string;
-}
+import type {
+    ApiEndpoint,
+    ApiResponse,
+    AuthCredential,
+    AuthHeader,
+    AuthMethod,
+    LoadJsonOptions,
+    OpenApiSpec,
+    StoredAuth,
+} from '@/types';
 
 class ExtensionBridge {
     private vscode: any;

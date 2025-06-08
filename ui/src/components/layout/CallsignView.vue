@@ -1,12 +1,9 @@
 <template>
     <div class="container flex h-screen min-w-full max-w-full gap-4">
-        <!-- :routes="flattenedRoutes"
-      @selectRoute="selectedRoute = $event" -->
         <RouteSidebar class="w-sm max-h-full max-w-full h-full flex flex-col" />
         <main class="flex-grow overflow-y-auto p-2">
             <AppBar />
             <RouteEditor />
-            <!-- :route="selectedRoute" -->
         </main>
     </div>
 </template>

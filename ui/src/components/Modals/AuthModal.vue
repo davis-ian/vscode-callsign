@@ -50,12 +50,12 @@ const apiKey = ref('');
 const bearer = ref('');
 
 async function saveHeaders() {
-    extensionBridge.storeCredential({
+    await extensionBridge.storeCredential({
         name: 'Bearer JWT',
         type: 'bearer',
         value: bearer.value,
     });
-    extensionBridge.storeCredential({
+    await extensionBridge.storeCredential({
         name: 'Api Key',
         type: 'api-key',
         value: apiKey.value,
