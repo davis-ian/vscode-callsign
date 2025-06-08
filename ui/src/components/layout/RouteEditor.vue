@@ -1,11 +1,31 @@
 <template>
     <div>
-        <p v-if="selectedRoute">{{ selectedRoute }}</p>
+        <!-- <p v-if="selectedRoute">{{ selectedRoute }}</p> -->
 
         <div v-if="selectedRoute" class="border-t border-vs-border p-3">
             <p class="mb-4" v-if="selectedRoute.details?.description">{{ selectedRoute.details.description }}</p>
 
             <Btn @click="toggleEditing">{{ editing ? 'Cancel' : 'Try it out' }}</Btn>
+
+            <div v-if="editing" class="my-4 p-4 border border-vs-border rounded">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Authentication:</label>
+                    <select
+                        v-model="selectedAuthId"
+                        @change="updateAuthPreview"
+                        class="w-full p-2 border rounded bg-vs-ibg border-vs-border text-vs-fg"
+                    >
+                        <option value="">No Authentication</option>
+                        <option v-for="auth in availableAuth" :key="auth.id" :value="auth.id">
+                            {{ auth.displayName }}
+                        </option>
+                    </select>
+
+                    <div v-if="authPreview" class="mt-2 p-2 bg-vs-pbg rounded text-xs">
+                        <code>{{ authPreview.key }}: {{ authPreview.value.substring(0, 30) }}...</code>
+                    </div>
+                </div>
+            </div>
 
             <div class="my-6">
                 <div class="my-4">
@@ -69,12 +89,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, inject } from 'vue';
+import { ref, computed, inject, onMounted } from 'vue';
 import TextInput from '@/components/TextInput.vue';
 import Btn from '@/components/Btn.vue';
+import { extensionBridge, type AuthMethod, type AuthHeader } from '@/services/ExtensionBridge';
 
 import { useSelectedRoute } from '@/composables/SelectedRouteSymbol';
 const selectedRoute = useSelectedRoute();
+
+onMounted(async () => {
+    try {
+        availableAuth.value = await extensionBridge.getAvailableAuthMethods();
+    } catch (err) {
+        console.error('Failed to load auth methods:', err);
+    }
+});
+
+const updateAuthPreview = async () => {
+    if (!selectedAuthId.value) {
+        authPreview.value = null;
+        return;
+    }
+
+    try {
+        authPreview.value = await extensionBridge.getAuthHeader(selectedAuthId.value);
+    } catch (err) {
+        console.error('Failed to get auth header:', err);
+        authPreview.value = null;
+    }
+};
 
 const editing = ref(false);
 function toggleEditing() {
@@ -85,50 +128,113 @@ const paramInputs = ref<Record<string, string>>({});
 const openApiSpec = inject<Record<string, any> | null>('openApiSpec');
 const components = computed(() => openApiSpec?.value?.components?.schemas || {});
 
+const selectedAuthId = ref<string>('');
+const availableAuth = ref<AuthMethod[]>([]);
+const authPreview = ref<AuthHeader | null>(null);
+
 const hasBody = computed(() => selectedRoute?.value?.details?.requestBody?.content?.['application/json']);
 const bodyInput = ref('');
 
-const response = ref('');
-const responseCode = ref<Number | null>(null);
+const response = ref<string>('');
+const responseCode = ref<number | null>(null);
+
 async function sendRequest() {
-    const path = selectedRoute.value.replace(
-        /{(.*?)}/g,
-        (_: any, name: string | number) => paramInputs.value[name] || `{${name}}`,
-    );
-    const url = `https://api-develop.memoryshare.com${path}`;
-
-    const init: RequestInit = {
-        method: selectedRoute.value?.method.toUpperCase(),
-        headers: { 'Content-Type': 'application/json' },
-    };
-
-    if (hasBody.value && bodyInput.value.trim()) {
-        try {
-            init.body = JSON.stringify(JSON.parse(bodyInput.value));
-        } catch {
-            response.value = '❌ Invalid JSON body';
-            return;
-        }
-    }
+    if (!selectedRoute.value) return;
 
     try {
-        const res = await fetch(url, init);
-        let data;
-        const contentType = res.headers.get('content-type');
-        if (contentType?.includes('application/json')) {
-            data = await res.json();
-            response.value = JSON.stringify(data, null, 2);
-            responseCode.value = res.status;
-        } else {
-            data = await res.text();
-            response.value = data;
+        // Build query params
+        const params: Record<string, string> = {};
+        if (selectedRoute.value.details?.parameters) {
+            selectedRoute.value.details.parameters.forEach((param: any) => {
+                if (paramInputs.value[param.name]) {
+                    params[param.name] = paramInputs.value[param.name];
+                }
+            });
         }
 
-        console.log(data, 'parsed response');
+        // Parse request body
+        let body = null;
+        if (hasBody.value && bodyInput.value.trim()) {
+            try {
+                body = JSON.parse(bodyInput.value);
+            } catch (err) {
+                response.value = '❌ Invalid JSON body';
+                return;
+            }
+        }
+
+        // Replace path parameters
+        const path = selectedRoute.value.route.replace(
+            /{(.+?)}/g,
+            (_match: string, name: string) => paramInputs.value[name] || `{${name}}`,
+        );
+
+        const endpoint = {
+            url: `https://api-develop.memoryshare.com${path}`,
+            method: selectedRoute.value.method,
+        };
+
+        // Make authenticated request through extension bridge
+        const result = await extensionBridge.makeAuthenticatedRequest(
+            endpoint,
+            selectedAuthId.value || undefined,
+            body,
+            params,
+        );
+
+        responseCode.value = result.status;
+
+        if (typeof result.body === 'object') {
+            response.value = JSON.stringify(result.body, null, 2);
+        } else {
+            response.value = result.body;
+        }
     } catch (err: any) {
-        response.value = `❌ Error: ${err.message}`;
+        console.error('Request failed: ', err);
+        response.value = `Error: ${err.message}`;
+        responseCode.value = null;
     }
 }
+
+// async function sendRequestOld() {
+//     const path = selectedRoute.value.replace(
+//         /{(.*?)}/g,
+//         (_: any, name: string | number) => paramInputs.value[name] || `{${name}}`,
+//     );
+//     const url = `https://api-develop.memoryshare.com${path}`;
+
+//     const init: RequestInit = {
+//         method: selectedRoute.value?.method.toUpperCase(),
+//         headers: { 'Content-Type': 'application/json' },
+//     };
+
+//     if (hasBody.value && bodyInput.value.trim()) {
+//         try {
+//             init.body = JSON.stringify(JSON.parse(bodyInput.value));
+//         } catch {
+//             response.value = '❌ Invalid JSON body';
+//             return;
+//         }
+//     }
+
+//     try {
+//         const res = await fetch(url, init);
+//         let data;
+//         const contentType = res.headers.get('content-type');
+//         if (contentType?.includes('application/json')) {
+//             data = await res.json();
+//             response.value = JSON.stringify(data, null, 2);
+//             responseCode.value = res.status;
+//         } else {
+//             data = await res.text();
+//             response.value = data;
+//         }
+
+//         console.log(data, 'parsed response');
+//     } catch (err: any) {
+//         response.value = `❌ Error: ${err.message}`;
+//     }
+// }
 
 const requestBodyExample = computed(() => {
     const schema = selectedRoute.value?.details?.requestBody?.content?.['application/json']?.schema;

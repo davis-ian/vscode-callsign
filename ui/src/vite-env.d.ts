@@ -6,12 +6,20 @@ declare module '*.vue' {
     export default component;
 }
 
-// declare global {
-//     interface Window {
-//         acquireVsCodeApi: () => {
-//             postMessage: (msg: any) => void;
-//             setState: (state: any) => void;
-//             getState: () => any;
-//         };
-//     }
-// }
+declare global {
+    interface Window {
+        addEventListener(
+            type: 'message',
+            listener: (event: MessageEvent) => void,
+            options?: boolean | AddEventListenerOptions,
+        ): void;
+    }
+
+    function acquireVsCodeApi(): {
+        postMessage(message: any): void;
+        setState(state: any): void;
+        getState(): any;
+    };
+}
+
+export {};

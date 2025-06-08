@@ -44,41 +44,29 @@ import Modal from '@/components/Modal.vue';
 import TextInput from '@/components/TextInput.vue';
 import Card from '@/components/Card.vue';
 import Btn from '@/components/Btn.vue';
-import { useVscode } from '@/composables/useVscode';
+import { extensionBridge } from '@/services/ExtensionBridge.ts';
 
 const apiKey = ref('');
 const bearer = ref('');
 
-const vscode = useVscode();
-
 async function saveHeaders() {
-    const apiMessage = {
-        command: 'storeAuth',
-        payload: {
-            name: 'Api Key',
-            type: 'api-key',
-            value: apiKey.value,
-        },
-    };
-
-    const bearerMessage = {
-        command: 'storeAuth',
-        payload: {
-            name: 'Bearer JWT',
-            type: 'bearer',
-            value: bearer.value,
-        },
-    };
-
-    await vscode.postMessage(apiMessage);
-    await vscode.postMessage(bearerMessage);
+    extensionBridge.storeCredential({
+        name: 'Bearer JWT',
+        type: 'bearer',
+        value: bearer.value,
+    });
+    extensionBridge.storeCredential({
+        name: 'Api Key',
+        type: 'api-key',
+        value: apiKey.value,
+    });
 
     isOpen.value = false;
 }
 
 function getAllCreds() {
     try {
-        vscode.postMessage({ command: 'getAllCredentials' });
+        extensionBridge.getAllCredentials();
     } catch (error) {
         console.log(error, 'error @ get all creds');
     }
@@ -86,7 +74,7 @@ function getAllCreds() {
 
 function clearAllCreds() {
     try {
-        vscode.postMessage({ command: 'clearAllCreds' });
+        extensionBridge.clearAllCredentials();
 
         apiKey.value = '';
         bearer.value = '';
@@ -119,11 +107,11 @@ onMounted(() => {
             const apiKeyCred = data.find((x: any) => x.type === 'api-key');
 
             if (bearerCred) {
-                vscode.postMessage({ command: 'getCredentialById', id: bearerCred.id });
+                extensionBridge.getCredentialById(bearerCred.id);
             }
 
             if (apiKeyCred) {
-                vscode.postMessage({ command: 'getCredentialById', id: apiKeyCred.id });
+                extensionBridge.getCredentialById(apiKeyCred.id);
             }
         }
 
