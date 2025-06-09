@@ -1,3 +1,5 @@
+import type { Component } from 'vue';
+
 export type GroupedRoutes = {
     tag: string;
     routes: Record<
@@ -110,5 +112,14 @@ export interface RequestSnapshot {
     path: string;
     status: number;
     requestBody?: any;
-    responseBody: any;
+    responseBody?: any;
+    queryParams?: Record<string, string>;
+    fullUrl: string;
+    route: OpenApiRoute;
+}
+
+export interface NavEntry {
+    label: string;
+    icon: Component;
+    to: string;
 }

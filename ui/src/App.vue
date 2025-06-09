@@ -1,10 +1,10 @@
 <template>
-    <CallsignView />
+    <AppLayout />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, provide } from 'vue';
-import CallsignView from './components/layout/CallsignView.vue';
+import AppLayout from './components/layout/AppLayout.vue';
 import { extensionBridge } from '@/services/ExtensionBridge';
 import type { OpenApiSpec } from './types';
 
