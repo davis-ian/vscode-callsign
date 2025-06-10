@@ -30,6 +30,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 const availableAuth = ref<AuthMethod[]>([]);
 const authPreview = ref<AuthHeader | null>(null);
+const authHeaders = ref<Record<string, AuthHeader | null>>({});
 
 const props = defineProps<{
     modelValue: string;
@@ -44,15 +45,9 @@ const selectedAuthId = computed({
     set: value => emit('update:modelValue', value),
 });
 
-// Watch for changes in modelValue to update preview
-// watch(selectedAuthId, (newVal, _oldVal) => {
-//     console.log(newVal, 'selected auth id watcher');
-// });
-
-// function handleAuthChange(newAuthId: string) {
-//     console.log(newAuthId, 'authId watcher');
-//     emit('update:modelValue', newAuthId);
-// }
+watch(selectedAuthId, (_newVal, _oldVal) => {
+    updateAuthPreview();
+});
 
 async function updateAuthPreview() {
     if (!props.modelValue) {
@@ -68,9 +63,45 @@ async function updateAuthPreview() {
     }
 }
 
+async function setDefaultAuth() {
+    if (props.modelValue) return;
+
+    const authWithToken = availableAuth.value.find(auth => hasValidToken(auth));
+    if (authWithToken) {
+        console.log(`auth selected auth method ${authWithToken.displayName}`);
+        emit('update:modelValue', authWithToken.id);
+    }
+}
+
+async function loadAuthHeaders() {
+    const headers: Record<string, AuthHeader | null> = {};
+
+    for (const auth of availableAuth.value) {
+        try {
+            headers[auth.id] = await extensionBridge.getAuthHeader(auth.id);
+        } catch (err) {
+            console.error(`Failed to laod auth header for ${auth.id} `, err);
+            headers[auth.id] = null;
+        }
+    }
+
+    authHeaders.value = headers;
+}
+
+function hasValidToken(auth: AuthMethod) {
+    const header = authHeaders.value[auth.id];
+    return header?.value ? header.value.trim().length > 0 : false;
+}
+
 onMounted(async () => {
     try {
         availableAuth.value = await extensionBridge.getAvailableAuthMethods();
+
+        console.log(availableAuth, 'available auth');
+
+        await loadAuthHeaders();
+
+        await setDefaultAuth();
     } catch (err) {
         console.error('Failed to load auth methods:', err);
     }

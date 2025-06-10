@@ -1,12 +1,12 @@
 <template>
-    <div class="h-full flex">
+    <div class="flex-grow flex">
         <RequestPanel
-            @send-request="initSendRequest"
+            @send-request="data => initSendRequest(data)"
             :route="selectedRoute"
             :loading="loading"
-            class="border-2 flex-grow"
+            class="w-1/2"
         />
-        <ResponsePanel :response="response" :loading="loading" class="border-2 flex-grow" />
+        <ResponsePanel :response="response" :loading="loading" class="w-1/2" />
     </div>
 </template>
 
@@ -24,21 +24,25 @@ import { sendRequest } from '@/services/RequestService';
 const loading = ref(false);
 const response = ref<ApiResponse | null>(null);
 
-async function initSendRequest() {
+async function initSendRequest(requestData: any) {
     if (!selectedRoute.value) return;
 
-    console.log(selectedRoute.value, 'initing request');
-    // try {
-    //     const result = await sendRequest(selectedRoute.value, paramInputs.value, selectedAuthId.value, bodyInput.value);
+    console.log(requestData, 'initing request');
+    try {
+        response.value = await sendRequest(
+            selectedRoute.value,
+            requestData.params,
+            requestData.authId,
+            requestData.body,
+        );
 
-    //     console.log(result, 'request result');
-    //     responseCode.value = result.status;
-    //     response.value = typeof result.body === 'object' ? JSON.stringify(result.body, null, 2) : result.body;
-    // } catch (err: any) {
-    //     console.log(err, 'request error');
-    //     response.value = err.message;
-    //     responseCode.value = null;
-    // }
+        // response.value = typeof result.body === 'object' ? JSON.stringify(result.body, null, 2) : result.body;
+    } catch (err: any) {
+        console.log(err, 'request error');
+        response.value = err;
+    }
+
+    console.log(response.value, 'response');
 }
 </script>
 

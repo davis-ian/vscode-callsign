@@ -1,13 +1,13 @@
 <template>
     <div>
-        <div>Response</div>
+        <p class="text-center uppercase">Response</p>
 
         <div v-if="response?.status">
-            <p class="text-xl">Status: {{ response?.body }}</p>
-            <p>Response Body</p>
+            <p class="text-xl">Status: {{ response?.status }}</p>
+
             <pre
                 class="bg-vs-pbg rounded overflow-x-auto p-2 text-xs max-h-100 border my-4"
-            ><code>{{ response }}</code></pre>
+            ><code>{{ response.body }}</code></pre>
         </div>
     </div>
 </template>

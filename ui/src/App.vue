@@ -28,4 +28,8 @@ onMounted(() => {
 });
 </script>
 
-<style scoped></style>
+<style>
+#app {
+    height: 100%;
+}
+</style>

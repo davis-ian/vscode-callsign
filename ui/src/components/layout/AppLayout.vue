@@ -1,7 +1,7 @@
 <template>
-    <div class="flex">
-        <NavSidebar />
-        <RouterView />
+    <div class="app-layout-container p-1">
+        <NavSidebar class="mr-2" />
+        <RouterView class="router-view" />
     </div>
 </template>
 
@@ -15,4 +15,17 @@ const selectedRoute = ref(null);
 provideSelectedRoute(selectedRoute);
 </script>
 
-<style scoped></style>
+<style scoped>
+.app-layout-container {
+    max-height: 100vh;
+    overflow: auto;
+    display: flex;
+    flex-direction: row;
+    min-height: 100%;
+}
+
+.router-view {
+    overflow-y: auto;
+    width: 100%;
+}
+</style>

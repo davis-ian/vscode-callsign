@@ -8,7 +8,7 @@
                 class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
                 :class="[
                     activeTab === tab.id
-                        ? 'border-blue-500 text-blue-500'
+                        ? 'border-vs-bbg text-vs-bbg '
                         : 'border-transparent text-gray-400 hover:text-gray-200',
                 ]"
             >
@@ -35,15 +35,15 @@ defineEmits(['update:activeTab']);
 const availableTabs = computed(() => {
     const tabs = [];
 
-    // if (props.hasParams) {
-    tabs.push({ id: 'params', label: 'Params' });
-    // }
+    if (props.hasParams) {
+        tabs.push({ id: 'params', label: 'Params' });
+    }
 
-    // if (props.hasBody) {
-    tabs.push({ id: 'body', label: 'Body' });
-    // }
+    if (props.hasBody) {
+        tabs.push({ id: 'body', label: 'Body' });
+    }
 
-    tabs.push({ id: 'headers', label: 'Headers' });
+    // tabs.push({ id: 'headers', label: 'Headers' });
 
     // if (props.showAuth) {
     tabs.push({ id: 'authId', label: 'Auth' });

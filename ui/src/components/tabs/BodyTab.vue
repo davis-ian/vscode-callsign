@@ -1,12 +1,6 @@
 <template>
     <div>
-        <div class="text-2xl">body</div>
-
         <div v-if="route?.details.requestBody">
-            <div class="my-4">
-                <p class="text-xl">Request Body</p>
-                <div class="border-t"></div>
-            </div>
             <pre
                 class="bg-vs-pbg rounded overflow-x-auto p-2 text-xs"
             ><code>{{ JSON.stringify(requestBodyExample, null, 2) }}</code></pre>

@@ -17,3 +17,10 @@
 code {
     background-color: transparent;
 }
+
+body {
+    /* border: 2px solid red; */
+    height: 100svh;
+    width: 100svw;
+    overflow: hidden;
+}

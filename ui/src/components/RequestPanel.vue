@@ -1,31 +1,42 @@
 <template>
-    <div class="flex flex-col h-full border border-vs-border rounded">
-        <Btn block @click="handleSend">Send</Btn>
-        <!-- Header -->
-        <div class="p-4 border-b border-vs-border">
-            <h2 class="text-lg font-semibold">{{ route?.path }}</h2>
+    <div class="flex flex-col h-full">
+        <div>
+            <p class="uppercase text-center">Request</p>
+        </div>
+        <!-- Header - Fixed at top -->
+        <div class="p-4 flex-shrink-0">
+            <h2 class="font-semibold">
+                <span v-if="route?.method" :class="getMethodColorClass(route?.method)">{{
+                    route?.method.toUpperCase()
+                }}</span>
+                {{ route?.path }}
+            </h2>
             <p class="text-sm text-gray-400" v-if="route?.details?.description">
                 {{ route.details.description }}
             </p>
         </div>
 
-        <!-- Request Tabs -->
-        <div class="flex-1 flex flex-col">
-            <RequestTabs v-model:activeTab="activeTab" :has-params="hasParams" :has-body="hasBody" />
+        <!-- Request Tabs - Flexible content area -->
+        <div class="flex-1 flex flex-col min-h-0">
+            <RequestTabs
+                v-model:activeTab="activeTab"
+                :has-params="hasParams"
+                :has-body="hasBody"
+                class="flex-shrink-0"
+            />
 
+            <!-- Scrollable content area -->
             <div class="flex-1 p-4 overflow-y-auto">
                 <component :is="currentTabComponent" v-bind="currentTabProps" @update:model-value="handleTabUpdate" />
             </div>
         </div>
 
-        <!-- Send Button -->
-        <div class="p-4 border-t border-vs-border">
+        <!-- Send Button - Fixed at bottom -->
+        <div class="p-4 flex-shrink-0">
             <Btn block @click="handleSend" :disabled="loading">
                 {{ loading ? 'Sending...' : 'Send Request' }}
             </Btn>
         </div>
-
-        <!-- <div class="border-2 border-red-500">{{ route }}</div> -->
     </div>
 </template>
 
@@ -38,6 +49,7 @@ import BodyTab from '@/components/tabs/BodyTab.vue';
 import HeadersTab from '@/components/tabs/HeadersTab.vue';
 import AuthTab from '@/components/tabs/AuthTab.vue';
 import type { OpenApiRoute } from '@/types';
+import { getMethodColorClass } from '@/utilities/dynamicColors';
 
 const props = defineProps<{
     route: OpenApiRoute | null;
@@ -103,9 +115,6 @@ const currentTabProps = computed(() => {
 });
 
 function handleTabUpdate(value: any) {
-    // requestData.value[activeTab.value] = value;
-    console.log('handling tab update, value:', value);
-    console.log('active tab: ', activeTab.value);
     switch (activeTab.value) {
         case 'params':
             requestData.value.params = value;
@@ -120,14 +129,10 @@ function handleTabUpdate(value: any) {
             requestData.value.authId = value;
             break;
     }
-
-    console.log(requestData, 'req data after update');
 }
 
 function handleSend() {
-    // emit('send-request', requestData.value);
-
-    console.log('requestData: ', requestData.value);
+    emit('send-request', requestData.value);
 }
 </script>
 

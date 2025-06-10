@@ -1,9 +1,5 @@
 <template>
     <div>
-        <div class="my-4">
-            <p class="text-xl">Params</p>
-            <div class="border-t"></div>
-        </div>
         <div class="my-2 flex" v-for="param in route?.details?.parameters">
             <div class="mr-4">
                 <p class="text-xs">
@@ -12,14 +8,14 @@
                     </span>
                     <span v-if="param?.schema?.format">({{ param.schema.format }})</span>
                 </p>
-                <p class="font-bold"><span v-if="param.required" class="text-red-500">*</span>{{ param.name }}</p>
+                <p><span v-if="param.required" class="text-red-500">*</span>{{ param.name }}</p>
             </div>
 
             <TextInput
+                class="flex-grow"
                 :model-value="modelValue[param.name] || ''"
                 @update:model-value="updateParam(param.name, $event)"
                 :placeholder="getParamPlaceholder(param)"
-                :disabled="!editing"
             />
         </div>
     </div>
@@ -31,7 +27,6 @@ import { computed } from 'vue';
 import TextInput from '../TextInput.vue';
 const props = defineProps<{
     route: OpenApiRoute | null;
-    editing: boolean;
     modelValue: Record<string, string>;
 }>();
 

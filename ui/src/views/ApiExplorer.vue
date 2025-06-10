@@ -1,10 +1,10 @@
 <template>
-    <div class="flex h-screen gap-4 w-full flex-grow">
-        <RouteSidebar v-if="!selectedRoute" class="w-sm max-h-full max-w-full h-full flex flex-col" />
-        <main class="flex-grow overflow-y-auto p-2">
-            <AppBar />
+    <div class="flex flex-col">
+        <AppBar class="mb-2" />
+        <div class="flex-grow flex flex-col">
+            <RouteSidebar v-if="!selectedRoute" />
             <RouteEditor v-if="selectedRoute" />
-        </main>
+        </div>
     </div>
 </template>
 
