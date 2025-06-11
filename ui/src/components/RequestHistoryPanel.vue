@@ -45,7 +45,7 @@
 import { useRequestHistory } from '@/composables/useRequestHistory';
 import type { RequestSnapshot } from '@/types';
 import { ref } from 'vue';
-import Btn from '@/components/Btn.vue';
+import Btn from '@/components/Common/Btn.vue';
 
 const { requestHistory } = useRequestHistory();
 
@@ -61,17 +61,21 @@ function toggleExpand(snapshot: RequestSnapshot) {
     }
 }
 
-async function initSendRequest(snap: RequestSnapshot) {
-    if (!snap.route) return;
+// async function initSendRequest(snap: RequestSnapshot) {
+//     if (!snap.route) return;
 
-    console.log(snap, 'initing request');
-    try {
-        //TODO: handle auth using auth id / setting new
-        // const result = await sendRequest(snap.route, snap.queryParams, selectedAuthId.value, snap.requestBody);
-        // console.log(result, 'request result');
-    } catch (err: any) {
-        console.log(err, 'request error');
-    }
+//     console.log(snap, 'initing request');
+//     try {
+//         //TODO: handle auth using auth id / setting new
+//         // const result = await sendRequest(snap.route, snap.queryParams, selectedAuthId.value, snap.requestBody);
+//         // console.log(result, 'request result');
+//     } catch (err: any) {
+//         console.log(err, 'request error');
+//     }
+// }
+
+function retryRequest(snap: any) {
+    console.log('TODO: rety request', snap.value);
 }
 </script>
 

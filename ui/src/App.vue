@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, provide } from 'vue';
-import AppLayout from './components/layout/AppLayout.vue';
+import AppLayout from './components/Layout/AppLayout.vue';
 import { extensionBridge } from '@/services/ExtensionBridge';
 import type { OpenApiSpec } from './types';
 

@@ -23,8 +23,7 @@
 
 <script setup lang="ts">
 import type { OpenApiRoute } from '@/types';
-import { computed } from 'vue';
-import TextInput from '../TextInput.vue';
+import TextInput from '../Common/TextInput.vue';
 const props = defineProps<{
     route: OpenApiRoute | null;
     modelValue: Record<string, string>;
@@ -33,10 +32,6 @@ const props = defineProps<{
 const emit = defineEmits<{
     'update:modelValue': [value: Record<string, string>];
 }>();
-
-const parameters = computed(() => {
-    props.route?.details?.parameters || [];
-});
 
 function updateParam(name: string, value: string) {
     console.log('update param', name, value);

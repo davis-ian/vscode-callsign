@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import Btn from '@/components/Btn.vue';
+import Btn from '@/components/Common/Btn.vue';
 import AuthModal from '@/components/Modals/AuthModal.vue';
 import { useSelectedRoute } from '@/composables/SelectedRouteSymbol';
 const selectedRoute = useSelectedRoute();

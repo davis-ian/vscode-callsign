@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { AuthService } from './services/AuthService';
+import { generateCode } from './commands/codeGenCommand';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -64,6 +65,20 @@ async function handleMessage(message: any, panel: vscode.WebviewPanel, context: 
         let data;
 
         switch (command) {
+            case 'generateCode':
+                console.log('Generating code with payload: ', payload);
+                data = await generateCode(payload);
+                break;
+            case 'selectFile':
+                console.log('TODO:');
+                break;
+            case 'selectDirectory':
+                console.log('TODO:');
+                break;
+            case 'openInFileManager':
+                console.log('TODO:');
+                break;
+
             case 'loadJson':
                 await handleLoadJson(message, panel, context);
                 break;

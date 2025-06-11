@@ -42,12 +42,12 @@
 
 <script setup lang="ts">
 import { ref, computed, type Component } from 'vue';
-import Btn from '@/components/Btn.vue';
+import Btn from '@/components/Common/Btn.vue';
 import RequestTabs from './RequestTabs.vue';
-import ParamsTab from '@/components/tabs/ParamsTab.vue';
-import BodyTab from '@/components/tabs/BodyTab.vue';
-import HeadersTab from '@/components/tabs/HeadersTab.vue';
-import AuthTab from '@/components/tabs/AuthTab.vue';
+import ParamsTab from '@/components/Tabs/ParamsTab.vue';
+import BodyTab from '@/components/Tabs/BodyTab.vue';
+import HeadersTab from '@/components/Tabs/HeadersTab.vue';
+import AuthTab from '@/components/Tabs/AuthTab.vue';
 import type { OpenApiRoute } from '@/types';
 import { getMethodColorClass } from '@/utilities/dynamicColors';
 

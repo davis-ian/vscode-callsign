@@ -24,7 +24,7 @@
 <script setup lang="ts">
 import { onMounted, inject, ref, type Ref } from 'vue';
 import type { OpenApiSpec } from '@/types';
-import RouteList from '@/components/RouteList.vue';
+import RouteList from '@/components/Route/RouteList.vue';
 
 import { useRoutesFlat } from '@/composables/useRoutesFlat';
 

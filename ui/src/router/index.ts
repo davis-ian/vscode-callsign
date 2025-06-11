@@ -19,6 +19,11 @@ const routes: RouteRecordRaw[] = [
         name: 'History',
         component: HistoryView,
     },
+    {
+        path: '/codegen',
+        name: 'CodeGen',
+        component: () => import('@/views/CodeGenView.vue'),
+    },
 ];
 
 const router = createRouter({

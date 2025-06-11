@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import type { ApiResponse } from '@/types';
 
-const props = defineProps<{
+defineProps<{
     response: ApiResponse | null;
 }>();
 </script>

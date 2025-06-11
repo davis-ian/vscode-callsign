@@ -9,9 +9,9 @@
 </template>
 
 <script setup lang="ts">
-import RouteSidebar from '@/components/layout/RouteSidebar.vue';
-import AppBar from '@/components/layout/AppBar.vue';
-import RouteEditor from '@/components/layout/RouteEditor.vue';
+import RouteSidebar from '@/components/Layout/RouteSidebar.vue';
+import AppBar from '@/components/Layout/AppBar.vue';
+import RouteEditor from '@/components/Layout/RouteEditor.vue';
 
 import { useSelectedRoute } from '@/composables/SelectedRouteSymbol';
 const selectedRoute = useSelectedRoute();

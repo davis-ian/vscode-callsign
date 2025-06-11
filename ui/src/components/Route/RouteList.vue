@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import RouteRow from '@/components/RouteRow.vue';
+import RouteRow from '@/components/Route/RouteRow.vue';
 import { type OpenApiRoute } from '@/types';
 
 const props = defineProps({

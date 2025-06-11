@@ -40,10 +40,10 @@
 
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
-import Modal from '@/components/Modal.vue';
-import TextInput from '@/components/TextInput.vue';
-import Card from '@/components/Card.vue';
-import Btn from '@/components/Btn.vue';
+import Modal from '@/components/Common/Modal.vue';
+import TextInput from '@/components/Common/TextInput.vue';
+import Card from '@/components/Common/Card.vue';
+import Btn from '@/components/Common/Btn.vue';
 import { extensionBridge } from '@/services/ExtensionBridge.ts';
 
 const apiKey = ref('');

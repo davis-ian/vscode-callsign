@@ -13,8 +13,8 @@
 <script setup lang="ts">
 import type { NavEntry } from '@/types';
 import { ref } from 'vue';
-import Btn from '../Btn.vue';
-import { History, Route } from 'lucide-vue-next';
+import Btn from '@/components/Common/Btn.vue';
+import { History, Route, Code } from 'lucide-vue-next';
 
 const navEntries = ref<NavEntry[]>([
     {
@@ -26,6 +26,11 @@ const navEntries = ref<NavEntry[]>([
         label: 'History',
         icon: History,
         to: '/history',
+    },
+    {
+        label: 'CodeGen',
+        icon: Code,
+        to: '/codegen',
     },
 ]);
 </script>

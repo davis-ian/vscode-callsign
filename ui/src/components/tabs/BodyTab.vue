@@ -27,9 +27,9 @@ const props = defineProps<{
     modelValue: string;
 }>();
 
-const emits = defineEmits<{
-    'update:modelValue': string;
-}>();
+// const emits = defineEmits<{
+//     'update:modelValue': string;
+// }>();
 
 const bodyInput = ref('');
 

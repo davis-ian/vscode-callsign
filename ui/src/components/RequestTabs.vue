@@ -21,7 +21,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import Btn from './Btn.vue';
 
 const props = defineProps<{
     activeTab: string;

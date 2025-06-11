@@ -4,6 +4,8 @@ import type {
     AuthCredential,
     AuthHeader,
     AuthMethod,
+    CodeGenResult,
+    CodeGenConfig,
     LoadJsonOptions,
     OpenApiSpec,
     StoredAuth,
@@ -35,7 +37,7 @@ class ExtensionBridge {
         });
     }
 
-    private async callExtension<T>(command: string, payload?: any): Promise<T> {
+    private async callExtension<T>(command: string, payload?: any, timeoutMs: number = 10000): Promise<T> {
         return new Promise((resolve, reject) => {
             const requestId = this.generateRequestId();
 
@@ -52,8 +54,24 @@ class ExtensionBridge {
                     this.pendingRequests.delete(requestId);
                     reject(new Error('Request timeout'));
                 }
-            }, 10000);
+            }, timeoutMs);
         });
+    }
+
+    async generateCode(config: CodeGenConfig): Promise<CodeGenResult> {
+        return this.callExtension<CodeGenResult>('generateCode', config, 120000);
+    }
+
+    async selectFile(options?: { filters?: Record<string, string[]> }): Promise<string | null> {
+        return this.callExtension<string | null>('selectFile', options);
+    }
+
+    async selectDirectory(): Promise<string | null> {
+        return this.callExtension<string | null>('selectDirectory');
+    }
+
+    async openInFileManager(path: string): Promise<void> {
+        return this.callExtension('openInFileManager', path);
     }
 
     async getAuthHeader(credentialId: string): Promise<AuthHeader | null> {
