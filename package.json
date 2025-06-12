@@ -15,9 +15,68 @@
         "commands": [
             {
                 "command": "callsign.openPanel",
-                "title": "Open Callsign"
+                "title": "Callsign: Open"
+            },
+            {
+                "command": "callsign.openRoute",
+                "title": "Callsign: Open Route"
+            },
+            {
+                "command": "callsign.addSpecUrl",
+                "title": "Callsign: Add Spec Url"
+            },
+            {
+                "command": "callsign.deleteSpecUrlFromSettings",
+                "title": "Callsign: Delete Spec Url"
+            },
+            {
+                "command": "callsign.openSettings",
+                "title": "Callsign: Open Settings"
+            },
+            {
+                "command": "callsign.loadRoutesFromSavedSpec",
+                "title": "Callsign: Load Routes from Spec"
+            },
+            {
+                "command": "callsign.quickSearchRoutes",
+                "title": "Callsign: Search Routes"
             }
-        ]
+        ],
+        "views": {
+            "explorer": [
+                {
+                    "id": "callsign.routes",
+                    "name": "Routes"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Callsign",
+            "properties": {
+                "callsign.specUrls": {
+                    "type": "array",
+                    "default": [],
+                    "description": "List of OpenAPI spec URLs to use in Callsign.",
+                    "items": {
+                        "type": "object",
+                        "required": [
+                            "name",
+                            "url"
+                        ],
+                        "properties": {
+                            "name": {
+                                "type": "string",
+                                "description": "A label for this API"
+                            },
+                            "url": {
+                                "type": "string",
+                                "description": "The OpenAPI JSON URL"
+                            }
+                        }
+                    }
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run package",

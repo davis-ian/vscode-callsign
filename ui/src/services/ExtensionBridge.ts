@@ -1,3 +1,4 @@
+import type { SpecUrl } from '@/stores/api';
 import type {
     ApiEndpoint,
     ApiResponse,
@@ -143,6 +144,26 @@ class ExtensionBridge {
 
     async loadJson(options: LoadJsonOptions): Promise<OpenApiSpec> {
         return this.callExtension<OpenApiSpec>('loadJson', options);
+    }
+
+    async getAllSpecUrls(): Promise<SpecUrl[]> {
+        return this.callExtension<SpecUrl[]>('getAllSpecUrls');
+    }
+
+    async saveSpecUrl(spec: { name: string; url: string }): Promise<SpecUrl> {
+        return this.callExtension<SpecUrl>('saveSpecUrl', spec);
+    }
+
+    async deleteSpecUrl(id: string): Promise<boolean> {
+        return this.callExtension<boolean>('deleteSpecUrl', { id });
+    }
+
+    async getLastSelectedSpecUrl(): Promise<string | null> {
+        return this.callExtension<string | null>('getLastSelectedSpecUrl');
+    }
+
+    async saveLastSelectedSpecUrl(urlId: string): Promise<void> {
+        return this.callExtension<void>('saveLastSelectedSpecUrl', { urlId });
     }
 
     private generateRequestId(): string {
