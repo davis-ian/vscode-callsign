@@ -1,24 +1,49 @@
 <template>
     <div>
-        <h3 class="font-bold mb-2 text-xl">Recent Requests</h3>
+        <h3 class="font-bold my-2 text-xl">Recent Requests</h3>
         <ul class="text-xs text-gray-400 space-y-1">
-            <li @click="toggleExpand(snap)" class="cursor-pointer" v-for="(snap, i) in requestHistory" :key="snap.id">
-                <span class="font-bold">{{ snap.method.toUpperCase() }}</span> {{ snap.fullUrl || snap.path }}
+            <li
+                @click="toggleExpand(snap)"
+                class="cursor-pointer p-1 my-3 rounded border"
+                v-for="(snap, i) in requestHistory"
+                :key="snap.id"
+            >
+                <!-- <span class="font-bold">{{ snap.method.toUpperCase() }}</span>
+                {{ snap.fullUrl || snap.path }} -->
+
+                <h2 class="font-semibold">
+                    <span v-if="snap?.method" :class="getMethodColorClass(snap?.method)">{{
+                        snap?.method.toUpperCase()
+                    }}</span>
+                    {{ snap?.path }}
+                </h2>
 
                 <p>
-                    {{ snap.status }}
-                    <span class="opacity-60">({{ new Date(snap.timestamp).toLocaleTimeString() }})</span>
+                    <span class="mr-2" :class="getStatusColorClass(snap.status)">
+                        {{ snap.status }}
+                    </span>
+                    <span class="opacity-60"
+                        >({{
+                            new Date(snap.timestamp).toLocaleDateString() +
+                            ' - ' +
+                            new Date(snap.timestamp).toLocaleTimeString()
+                        }})</span
+                    >
                 </p>
 
                 <div v-if="expandedIds.has(snap.id)" class="my-2 p-2">
-                    <Btn @click.stop="retryRequest(snap)">Retry</Btn>
-                    <p>
-                        Status: <span class="font-bold">{{ snap.status }}</span>
+                    <!-- <Btn @click.stop="retryRequest(snap)">Retry</Btn> -->
+                    <p >
+                        Status:
+                        <span class="font-bold" :class="getStatusColorClass(snap.status)">{{ snap.status }}</span>
                     </p>
 
-                    <div class="my-1 p-1 border-b">
+                    <div class="my-1 border-b">
                         <p class="">Query Params:</p>
-                        <p v-for="(value, key) in snap.queryParams">{{ key }}: {{ value }}</p>
+                        <p v-for="(value, key) in snap.queryParams">
+                        <pre
+                            class="bg-vs-pbg rounded overflow-x-auto p-2 text-xs max-h-100 my-4"
+                        ><code>{{ key }}: {{ value }}</code></pre></p>
                     </div>
 
                     <div class="my-1 p-1 border-b">
@@ -28,14 +53,13 @@
 
                     <div class="my-1 p-1 border-b">
                         <p>Response Body:</p>
-                        <p>{{ snap.responseBody }}</p>
-                    </div>
-                    <!-- <div class="border-2 border-red-500">
-                        {{ snap }}
-                    </div> -->
-                </div>
+                        <!-- <p>{{ snap.responseBody }}</p> -->
 
-                <div class="border-t" v-if="i != requestHistory.length - 1"></div>
+                        <pre
+                            class="bg-vs-pbg rounded overflow-x-auto p-2 text-xs max-h-100 my-4"
+                        ><code>{{ snap.responseBody }}</code></pre>
+                    </div>
+                </div>
             </li>
         </ul>
     </div>
@@ -44,15 +68,15 @@
 <script setup lang="ts">
 import { useRequestHistory } from '@/composables/useRequestHistory';
 import type { RequestSnapshot } from '@/types';
+import { getMethodColorClass, getStatusColorClass } from '@/utilities/dynamicColors';
 import { ref } from 'vue';
-import Btn from '@/components/Common/Btn.vue';
+// import Btn from '@/components/Common/Btn.vue';
 
 const { requestHistory } = useRequestHistory();
 
 const expandedIds = ref(new Set<string>());
 
 function toggleExpand(snapshot: RequestSnapshot) {
-    console.log(snapshot, 'snap');
 
     if (expandedIds.value.has(snapshot.id)) {
         expandedIds.value.delete(snapshot.id);
@@ -61,22 +85,11 @@ function toggleExpand(snapshot: RequestSnapshot) {
     }
 }
 
-// async function initSendRequest(snap: RequestSnapshot) {
-//     if (!snap.route) return;
 
-//     console.log(snap, 'initing request');
-//     try {
-//         //TODO: handle auth using auth id / setting new
-//         // const result = await sendRequest(snap.route, snap.queryParams, selectedAuthId.value, snap.requestBody);
-//         // console.log(result, 'request result');
-//     } catch (err: any) {
-//         console.log(err, 'request error');
-//     }
+
+// function retryRequest(snap: any) {
+//     console.log('TODO: rety request', snap.value);
 // }
-
-function retryRequest(snap: any) {
-    console.log('TODO: rety request', snap.value);
-}
 </script>
 
 <style scoped></style>

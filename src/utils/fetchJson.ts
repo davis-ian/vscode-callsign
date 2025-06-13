@@ -1,16 +1,13 @@
 import { OpenApiRoute, OpenApiSpec } from '../types';
 
 export async function loadJsonFromUrl(url: string) {
-    console.log('fetching from url: ', url);
     const response = await fetch(url);
-    console.log('Response status: ', response.status);
 
     if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const jsonData = await response.json();
-    console.log(jsonData, 'json data');
     let result = jsonData as OpenApiSpec;
     result.path = url;
 

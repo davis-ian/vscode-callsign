@@ -60,8 +60,6 @@ const bearer = ref('');
 const selectedAuthType = ref('bearer');
 
 async function saveHeaders() {
-    console.log(selectedAuthType.value, 'selected auth type');
-
     if (selectedAuthType.value === 'bearer') {
         await extensionBridge.storeCredential({
             name: 'Bearer JWT',
@@ -133,8 +131,6 @@ async function preloadSelectedAuth() {
 }
 
 onMounted(() => {
-    console.log(specStore.selectedAuthId, 'selectedAuthId @ auth modal mount');
-
     preloadSelectedAuth();
 
     window.addEventListener('message', event => {

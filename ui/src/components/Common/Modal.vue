@@ -38,7 +38,6 @@ const emit = defineEmits(['update:modelValue']);
 
 function handleEscape(e: KeyboardEvent) {
     if (e.key === 'Escape') {
-        console.log('esc heardc');
         emit('update:modelValue', false);
     }
 }

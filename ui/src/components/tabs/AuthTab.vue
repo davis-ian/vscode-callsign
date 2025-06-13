@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 import CurrentAuthSelect from '../CurrentAuthSelect.vue';
 
 const props = defineProps<{
@@ -19,10 +19,6 @@ const emit = defineEmits<{
 const selectedAuthId = computed({
     get: () => props.modelValue,
     set: value => emit('update:modelValue', value),
-});
-
-watch(selectedAuthId, (newVal, _oldVal) => {
-    console.log(newVal, 'authId watcher @ auth TAB');
 });
 </script>
 

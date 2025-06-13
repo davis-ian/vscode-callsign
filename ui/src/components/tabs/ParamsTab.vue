@@ -34,7 +34,6 @@ const emit = defineEmits<{
 }>();
 
 function updateParam(name: string, value: string) {
-    console.log('update param', name, value);
     const newParams = {
         ...props.modelValue,
         [name]: value,

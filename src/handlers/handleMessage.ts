@@ -13,26 +13,13 @@ export async function handleMessage(message: any, panel: vscode.WebviewPanel, co
 
         switch (command) {
             case 'generateCode':
-                console.log('Generating code with payload: ', payload);
                 data = await generateCode(payload);
                 break;
-            case 'selectFile':
-                console.log('TODO:');
-                break;
-            case 'selectDirectory':
-                console.log('TODO:');
-                break;
-            case 'openInFileManager':
-                console.log('TODO:');
-                break;
 
-            // case 'loadJson':
-            //     await handleLoadJson(message, panel, context);
-            //     break;
             case 'storeAuth':
                 const authPayload = payload || message.payload;
                 const { type, name: authName, value } = authPayload;
-                console.log('storing auth @ extension.ts', type, authName);
+
                 const authIdUp = await authService.storeCredential({ name: authName, type }, value);
 
                 await context.workspaceState.update('callsign.selectedAuthId', authIdUp);
@@ -75,17 +62,9 @@ export async function handleMessage(message: any, panel: vscode.WebviewPanel, co
                 const specPayload = payload as { name: string; url: string };
                 const { name: specName, url: specUrl } = specPayload;
 
-                console.log('=== SAVE SPEC URL DEBUG ===');
-                console.log('Raw message:', JSON.stringify(message, null, 2));
-                console.log('Command:', command);
-                console.log('Payload:', payload);
-                console.log('Payload type:', typeof payload);
-
                 const specUrls = context.globalState.get<
                     Array<{ id: string; name: string; url: string; createdAt: string }>
                 >('callsign.specUrls', []);
-
-                console.log(specUrls, 'spec urls');
 
                 const newSpec = {
                     id: `spec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

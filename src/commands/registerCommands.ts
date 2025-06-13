@@ -159,7 +159,6 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 await context.workspaceState.update('callsign.lastSelectedSpecUrl', rawSpec.path);
                 await context.workspaceState.update('callsign.cachedSpec', rawSpec);
 
-                console.log('caching spec', rawSpec);
                 vscode.window.showInformationMessage(`Loaded routes from ${selected}`);
             } catch (err) {
                 vscode.window.showErrorMessage(`Failed to load spec: ${(err as Error).message}`);

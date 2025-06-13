@@ -115,10 +115,6 @@
                             <FolderOpen :size="16" class="mr-1" />
                             Open Folder
                         </Btn>
-                        <Btn @click="refreshFileExplorer" variant="outlined" size="sm">
-                            <RefreshCw :size="16" class="mr-1" />
-                            Refresh Explorer
-                        </Btn>
                     </div>
                 </div>
 
@@ -228,16 +224,6 @@ async function openOutputFolder() {
         await extensionBridge.openInFileManager(outputDir.value);
     } catch (error) {
         console.error('Failed to open folder:', error);
-    }
-}
-
-async function refreshFileExplorer() {
-    try {
-        // await extensionBridge.refreshFileExplorer();
-
-        console.log('TODO: refresh file explorer');
-    } catch (error) {
-        console.error('Failed to refresh explorer:', error);
     }
 }
 </script>

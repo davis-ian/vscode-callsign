@@ -87,10 +87,6 @@ onMounted(async () => {
     try {
         availableAuth.value = await extensionBridge.getAvailableAuthMethods();
 
-        console.log(availableAuth, 'available auth');
-
-        console.log(selectedAuthId, 'selectedAuthId @ currentauthselect mount');
-
         await loadAuthHeaders();
         updateAuthPreview();
 

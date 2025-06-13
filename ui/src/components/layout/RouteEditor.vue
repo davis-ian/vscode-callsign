@@ -28,7 +28,6 @@ const response = ref<ApiResponse | null>(null);
 async function initSendRequest(requestData: any) {
     if (!specStore.selectedRoute) return;
 
-    console.log(requestData, 'initing request');
     try {
         response.value = await sendRequest(
             specStore.selectedRoute,
@@ -42,8 +41,6 @@ async function initSendRequest(requestData: any) {
         console.log(err, 'request error');
         response.value = err;
     }
-
-    console.log(response.value, 'response');
 }
 </script>
 

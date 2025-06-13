@@ -37,7 +37,6 @@
             const vscode = acquireVsCodeApi();
 
             function loadJson() {
-                console.log('Load Json CLICKED');
                 vscode.postMessage({ command: 'loadJson' });
             }
 

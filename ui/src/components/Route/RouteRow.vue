@@ -20,7 +20,6 @@ const props = defineProps<{
 }>();
 
 function selectRow() {
-    console.log(props.route, 'selected route');
     selectedRoute.value = props.route;
 }
 </script>

@@ -26,8 +26,6 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
     async setRoutes(spec: OpenApiSpec, context: vscode.ExtensionContext): Promise<void> {
         this.groupedRoutes = groupRoutesByTag(spec);
         this._onDidChangeTreeData.fire(undefined);
-
-        console.log('updating last selected: ', spec.path);
     }
 
     getTreeItem(element: RouteTreeItem): vscode.TreeItem {

@@ -34,7 +34,6 @@ export async function sendRequest(
     // Replace path params
     const path = route.path.replace(/{(.+?)}/g, (_match, name) => paramInputs[name] || `{${name}}`);
 
-    console.log(path, 'path @ req service');
     const endpoint = {
         url: `https://api-develop.memoryshare.com${path}`,
         method: route.method,

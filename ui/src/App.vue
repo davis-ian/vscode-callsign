@@ -14,7 +14,6 @@ const router = useRouter();
 
 onMounted(async () => {
     const initialData = await extensionBridge.vueAppReady();
-    console.log('initialData', initialData);
     specStore.sync(initialData.openApiSpec, initialData.selectedRoute, initialData.selectedAuthId);
 
     if (initialData.selectedRoute) {
@@ -22,16 +21,12 @@ onMounted(async () => {
     }
 
     window.addEventListener('message', e => {
-        console.log(e, 'messate heard @ vue app');
-
         if (e.data.command === 'navigateTo') {
             router.push({ path: e.data.path });
         }
 
-        if (e.data.type === 'syncState') {
-            // Object.assign(state, e.data.payload);
-            // console.log(state, 'state synced');
-        }
+        // if (e.data.type === 'syncState') {
+        // }
     });
 });
 </script>
