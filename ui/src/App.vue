@@ -22,6 +22,12 @@ onMounted(async () => {
     }
 
     window.addEventListener('message', e => {
+        console.log(e, 'messate heard @ vue app');
+
+        if (e.data.command === 'navigateTo') {
+            router.push({ path: e.data.path });
+        }
+
         if (e.data.type === 'syncState') {
             // Object.assign(state, e.data.payload);
             // console.log(state, 'state synced');

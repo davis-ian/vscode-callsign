@@ -70,7 +70,7 @@ function getNavigationScript(): string {
                 console.log('Webview received message:', message);
 
                 switch (message.command) {
-                    case 'navigate':
+                    case 'navigateTo':
                         console.log('Navigation message received:', message.url);
                         // Navigate to specific route
                         if (window.vscodeRouter) {

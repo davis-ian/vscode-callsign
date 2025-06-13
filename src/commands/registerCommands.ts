@@ -40,6 +40,32 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             );
         }),
     );
+    vscode.commands.registerCommand('callsign.openHistoryPage', () => {
+        vscode.commands.executeCommand('callsign.openWebviewPanel', '/history');
+    });
+    vscode.commands.registerCommand('callsign.openWebviewPanel', async (initialRoute?: string) => {
+        const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
+            enableScripts: true,
+            retainContextWhenHidden: true,
+        });
+
+        panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
+
+        panel.webview.onDidReceiveMessage(
+            message => handleMessage(message, panel, context),
+            undefined,
+            context.subscriptions,
+        );
+
+        if (initialRoute) {
+            panel.webview.onDidReceiveMessage(() => {
+                panel.webview.postMessage({
+                    command: 'navigateTo',
+                    path: initialRoute,
+                });
+            });
+        }
+    });
 
     // // Register the openRoute command
     // context.subscriptions.push(

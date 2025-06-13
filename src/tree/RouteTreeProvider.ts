@@ -47,15 +47,23 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
         // child level: routes within that tag
         const routes = this.groupedRoutes[element.label] || [];
         return Promise.resolve(
-            routes.map(
-                r =>
-                    new RouteTreeItem(
-                        `${r.method.toUpperCase()} ${r.path}`,
-                        vscode.TreeItemCollapsibleState.None,
-                        r.method,
-                        r.details.summary,
-                    ),
-            ),
+            routes.map((r: OpenApiRoute) => {
+                const item = new RouteTreeItem(
+                    `${r.method.toUpperCase()} ${r.path}`,
+                    vscode.TreeItemCollapsibleState.None,
+                    r.method,
+                    r.details.summary,
+                );
+
+                // Attach the command to this TreeItem
+                item.command = {
+                    command: 'callsign.openRoute',
+                    title: 'Open Route',
+                    arguments: [r], // Pass the route to the command
+                };
+
+                return item;
+            }),
         );
     }
 

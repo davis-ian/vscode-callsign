@@ -40,6 +40,10 @@
             {
                 "command": "callsign.quickSearchRoutes",
                 "title": "Callsign: Search Routes"
+            },
+            {
+                "command": "callsign.openHistoryPage",
+                "title": "Callsign: Request History"
             }
         ],
         "views": {
