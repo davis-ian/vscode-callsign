@@ -1,13 +1,11 @@
 <template>
     <div class="app-layout-container p-1">
-        <NavSidebar class="mr-2" />
         <RouterView class="router-view" />
     </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import NavSidebar from '@/components/Layout/NavSidebar.vue';
 import { provideSelectedRoute } from '@/composables/SelectedRouteSymbol';
 import { RouterView } from 'vue-router';
 

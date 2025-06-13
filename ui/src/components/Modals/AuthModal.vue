@@ -5,8 +5,14 @@
                 <template #title> Auth </template>
 
                 <template #content>
+                    <select v-model="selectedAuthType" class="mb-4 w-full p-2 border rounded">
+                        <option disabled value="">Select auth type</option>
+                        <option value="bearer">Bearer Token</option>
+                        <option value="api-key">API Key</option>
+                    </select>
+
                     <div class="flex flex-col gap-6 my-6">
-                        <div class="flex flex-col">
+                        <div v-if="selectedAuthType === 'api-key'" class="flex flex-col">
                             <span>ApiKey</span>
                             <span>Custom Api Key</span>
                             <span>Name: <code>x-api-key</code></span>
@@ -14,7 +20,7 @@
                             <TextInput v-model="apiKey" placeholder="ApiKey" />
                         </div>
 
-                        <div class="flex flex-col">
+                        <div v-if="selectedAuthType === 'bearer'" class="flex flex-col">
                             <span>Bearer</span>
                             <span>JWT Auth using the Bearer scheme</span>
                             <span>Name: <code>Authorization</code></span>
@@ -45,22 +51,30 @@ import TextInput from '@/components/Common/TextInput.vue';
 import Card from '@/components/Common/Card.vue';
 import Btn from '@/components/Common/Btn.vue';
 import { extensionBridge } from '@/services/ExtensionBridge.ts';
+import { useSpecStore } from '@/stores/spec';
+
+const specStore = useSpecStore();
 
 const apiKey = ref('');
 const bearer = ref('');
+const selectedAuthType = ref('bearer');
 
 async function saveHeaders() {
-    await extensionBridge.storeCredential({
-        name: 'Bearer JWT',
-        type: 'bearer',
-        value: bearer.value,
-    });
-    await extensionBridge.storeCredential({
-        name: 'Api Key',
-        type: 'api-key',
-        value: apiKey.value,
-    });
+    console.log(selectedAuthType.value, 'selected auth type');
 
+    if (selectedAuthType.value === 'bearer') {
+        await extensionBridge.storeCredential({
+            name: 'Bearer JWT',
+            type: 'bearer',
+            value: bearer.value,
+        });
+    } else if (selectedAuthType.value === 'api-key') {
+        await extensionBridge.storeCredential({
+            name: 'Api Key',
+            type: 'api-key',
+            value: apiKey.value,
+        });
+    }
     isOpen.value = false;
 }
 
@@ -98,7 +112,31 @@ const isOpen = computed({
     set: value => emit('update:modelValue', value),
 });
 
+async function preloadSelectedAuth() {
+    if (!specStore.selectedAuthId) return;
+
+    try {
+        const resp = await extensionBridge.getCredentialById(specStore.selectedAuthId);
+
+        if (!resp?.credential) return;
+
+        if (resp.credential.type === 'bearer') {
+            selectedAuthType.value = 'bearer';
+            bearer.value = resp.value;
+        } else if (resp.credential.type === 'api-key') {
+            selectedAuthType.value = 'api-key';
+            apiKey.value = resp.value;
+        }
+    } catch (err) {
+        console.error('Failed to get auth header:', err);
+    }
+}
+
 onMounted(() => {
+    console.log(specStore.selectedAuthId, 'selectedAuthId @ auth modal mount');
+
+    preloadSelectedAuth();
+
     window.addEventListener('message', event => {
         const { command, data } = event.data;
 

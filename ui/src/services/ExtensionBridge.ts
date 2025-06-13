@@ -1,4 +1,4 @@
-import type { SpecUrl } from '@/stores/api';
+import type { SpecUrl } from '@/stores/spec';
 import type {
     ApiEndpoint,
     ApiResponse,
@@ -73,6 +73,10 @@ class ExtensionBridge {
 
     async openInFileManager(path: string): Promise<void> {
         return this.callExtension('openInFileManager', path);
+    }
+
+    async vueAppReady(): Promise<any> {
+        return this.callExtension('vueAppReady');
     }
 
     async getAuthHeader(credentialId: string): Promise<AuthHeader | null> {

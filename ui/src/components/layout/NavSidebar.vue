@@ -20,7 +20,7 @@ const navEntries = ref<NavEntry[]>([
     {
         label: 'Explorer',
         icon: Route,
-        to: '/api-explorer',
+        to: '/',
     },
     {
         label: 'History',

@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type Component } from 'vue';
+import { ref, computed, type Component, onMounted } from 'vue';
 import Btn from '@/components/Common/Btn.vue';
 import RequestTabs from './RequestTabs.vue';
 import ParamsTab from '@/components/Tabs/ParamsTab.vue';
@@ -50,6 +50,9 @@ import HeadersTab from '@/components/Tabs/HeadersTab.vue';
 import AuthTab from '@/components/Tabs/AuthTab.vue';
 import type { OpenApiRoute } from '@/types';
 import { getMethodColorClass } from '@/utilities/dynamicColors';
+import { useSpecStore } from '@/stores/spec';
+
+const specStore = useSpecStore();
 
 const props = defineProps<{
     route: OpenApiRoute | null;
@@ -134,6 +137,12 @@ function handleTabUpdate(value: any) {
 function handleSend() {
     emit('send-request', requestData.value);
 }
+
+onMounted(() => {
+    if (specStore.selectedAuthId) {
+        requestData.value.authId = specStore.selectedAuthId;
+    }
+});
 </script>
 
 <style scoped></style>

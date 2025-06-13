@@ -1,12 +1,21 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 
-export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri) {
+export function getWebviewContent(
+    webview: vscode.Webview,
+    extensionUri: vscode.Uri,
+    context?: vscode.ExtensionContext,
+) {
     const isDev = process.env.NODE_ENV === 'development';
 
     console.log('IS DEV: ', isDev);
+    // Get the last selected spec URL from context if available
+    const lastSelectedSpecUrl: string | null = context
+        ? context.workspaceState.get<string>('callsign.lastSelectedSpecUrl') ?? null
+        : null;
+
     if (isDev) {
-        return getDevServerHtml();
+        return getDevServerHtml(lastSelectedSpecUrl);
     }
 
     // --- Production: Load from built files in ui-dist ---
@@ -22,11 +31,14 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
     // Rewrite ./assets/... and ./vite.svg
     html = html.replace(/"\.\/(.*?)"/g, (_match, p1) => `"${assetUri(p1)}"`);
 
+    // Inject initial data and navigation handling script before closing body tag
+    const scriptsToInject = getInitialDataScript(lastSelectedSpecUrl) + getNavigationScript();
+    html = html.replace('</body>', `${scriptsToInject}</body>`);
+
     return html;
 }
 
-function getDevServerHtml() {
-    // Just load dev server
+function getDevServerHtml(lastSelectedSpecUrl: string | null) {
     return /* html */ `
             <!DOCTYPE html>
             <html lang="en">
@@ -37,11 +49,59 @@ function getDevServerHtml() {
             </head>
             <body>
             <div id="app"></div>
-            <script>
-
-            </script>
+            ${getInitialDataScript(lastSelectedSpecUrl)}
+            ${getNavigationScript()}
             <script type="module" src="http://localhost:5173/src/main.ts"></script>
             </body>
             </html>
             `;
+}
+
+function getNavigationScript(): string {
+    return /* html */ `
+        <script>
+            // Store router instance globally so we can navigate from extension messages
+            window.vscodeRouter = null;
+
+            // Listen for messages from the extension
+            window.addEventListener('message', event => {
+                const message = event.data;
+
+                console.log('Webview received message:', message);
+
+                switch (message.command) {
+                    case 'navigate':
+                        console.log('Navigation message received:', message.url);
+                        // Navigate to specific route
+                        if (window.vscodeRouter) {
+                            console.log('Router available, navigating to:', message.url);
+                            window.vscodeRouter.push(message.url);
+                        } else {
+                            console.log('Router not ready, storing navigation for later:', message.url);
+                            // Store navigation command for later if router isn't ready yet
+                            window.pendingNavigation = message.url;
+                        }
+                        break;
+                    default:
+                        console.log('Unhandled message command:', message.command);
+                        break;
+                }
+            });
+
+            console.log('Navigation script loaded');
+        </script>
+    `;
+}
+
+function getInitialDataScript(lastSelectedSpecUrl: string | null): string {
+    return /* html */ `
+        <script>
+            // Inject initial data from VS Code extension
+            window.callsignInitialData = {
+                lastSelectedSpecUrl: ${JSON.stringify(lastSelectedSpecUrl)},
+                timestamp: new Date().toISOString()
+            };
+            console.log('Initial data injected:', window.callsignInitialData);
+        </script>
+    `;
 }

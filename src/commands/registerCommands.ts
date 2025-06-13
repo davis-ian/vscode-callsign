@@ -6,6 +6,9 @@ import { loadJsonFromUrl } from '../utils/fetchJson';
 import { handleMessage } from '../handlers/handleMessage';
 import { getWebviewContent } from '../utils/getWebviewContent';
 import { getConfiguredSpecUrls } from '../utils/settings';
+// import { encodePathForUrl } from '../utils/encode';
+
+// let webviewPanel: vscode.WebviewPanel | undefined;
 
 export function registerCommands(context: vscode.ExtensionContext, routeTreeProvider: RouteTreeProvider) {
     context.subscriptions.push(
@@ -16,10 +19,34 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('callsign.openRoute', (route: OpenApiRoute) => {
+        vscode.commands.registerCommand('callsign.openRoute', async (route: OpenApiRoute) => {
             vscode.window.showInformationMessage(`Route: ${route.method.toUpperCase()} ${route.path}`);
+
+            await context.workspaceState.update('callsign.selectedRoute', route);
+
+            const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
+                enableScripts: true,
+                retainContextWhenHidden: true,
+            });
+
+            panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
+
+            // openRouteInWebview(context, route, panel);
+
+            panel.webview.onDidReceiveMessage(
+                message => handleMessage(message, panel, context),
+                undefined,
+                context.subscriptions,
+            );
         }),
     );
+
+    // // Register the openRoute command
+    // context.subscriptions.push(
+    //     scode.commands.registerCommand('callsign.openRoute', (route: OpenApiRoute) => {
+    //         openRouteInWebview(context, route);
+    //     }),
+    // );
 
     context.subscriptions.push(
         vscode.commands.registerCommand('callsign.showRoutesView', () => {
@@ -102,6 +129,11 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             try {
                 const rawSpec: OpenApiSpec = await loadJsonFromUrl(selected);
                 routeTreeProvider.setRoutes(rawSpec, context);
+
+                await context.workspaceState.update('callsign.lastSelectedSpecUrl', rawSpec.path);
+                await context.workspaceState.update('callsign.cachedSpec', rawSpec);
+
+                console.log('caching spec', rawSpec);
                 vscode.window.showInformationMessage(`Loaded routes from ${selected}`);
             } catch (err) {
                 vscode.window.showErrorMessage(`Failed to load spec: ${(err as Error).message}`);
@@ -137,7 +169,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 retainContextWhenHidden: true,
             });
 
-            panel.webview.html = getWebviewContent(panel.webview, context.extensionUri);
+            panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
 
             panel.webview.onDidReceiveMessage(
                 message => handleMessage(message, panel, context),
@@ -147,3 +179,56 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
         }),
     );
 }
+
+// export function openRouteInWebview(
+//     context: vscode.ExtensionContext,
+//     route: OpenApiRoute,
+//     webviewPanel: vscode.WebviewPanel | undefined,
+// ) {
+//     console.log('OPEN ROUTE TRIGGEREDL: ', route);
+//     // Create or show the webview panel
+//     if (webviewPanel) {
+//         webviewPanel.reveal(vscode.ViewColumn.One);
+//     } else {
+//         webviewPanel = vscode.window.createWebviewPanel(
+//             'callsignApiTester',
+//             'Callsign API Tester',
+//             vscode.ViewColumn.One,
+//             {
+//                 enableScripts: true,
+//                 retainContextWhenHidden: true,
+//                 localResourceRoots: [
+//                     vscode.Uri.joinPath(context.extensionUri, 'ui-dist'),
+//                     vscode.Uri.joinPath(context.extensionUri, 'webview'),
+//                 ],
+//             },
+//         );
+
+//         // Handle webview disposal
+//         webviewPanel.onDidDispose(
+//             () => {
+//                 webviewPanel = undefined;
+//             },
+//             null,
+//             context.subscriptions,
+//         );
+
+//         console.log('GETTING WEBVIEW HTML');
+//         // Set the webview's HTML content using existing function
+//         webviewPanel.webview.html = getWebviewContent(webviewPanel.webview, context.extensionUri, context);
+//     }
+
+//     // Navigate to the specific route using URL hash
+//     if (route) {
+//         const encodedPath = encodePathForUrl(route.path);
+//         const routeUrl = `/route/${route.method.toLowerCase()}/${encodedPath}`;
+
+//         console.log(routeUrl, 'route url');
+
+//         // Send navigation message to webview
+//         webviewPanel.webview.postMessage({
+//             command: 'navigate',
+//             url: routeUrl,
+//         });
+//     }
+// }

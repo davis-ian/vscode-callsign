@@ -1,3 +1,9 @@
+import { generateCode } from '../commands/codeGenCommand';
+import { makeAuthenticatedRequest } from '../commands/makeAuthenticatedRequest';
+import { AuthService } from '../services/AuthService';
+import * as vscode from 'vscode';
+import { OpenApiRoute, OpenApiSpec } from '../types';
+
 export async function handleMessage(message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
     const authService = new AuthService(context);
     const { command, requestId, payload } = message;
@@ -20,14 +26,16 @@ export async function handleMessage(message: any, panel: vscode.WebviewPanel, co
                 console.log('TODO:');
                 break;
 
-            case 'loadJson':
-                await handleLoadJson(message, panel, context);
-                break;
+            // case 'loadJson':
+            //     await handleLoadJson(message, panel, context);
+            //     break;
             case 'storeAuth':
                 const authPayload = payload || message.payload;
                 const { type, name: authName, value } = authPayload;
                 console.log('storing auth @ extension.ts', type, authName);
-                await authService.storeCredential({ name: authName, type }, value);
+                const authIdUp = await authService.storeCredential({ name: authName, type }, value);
+
+                await context.workspaceState.update('callsign.selectedAuthId', authIdUp);
                 data = { success: true };
                 break;
 
@@ -105,19 +113,34 @@ export async function handleMessage(message: any, panel: vscode.WebviewPanel, co
             }
 
             case 'getLastSelectedSpecUrl':
-                data = context.globalState.get('callsign.lastSelectedSpecUrl', null);
+                data = context.workspaceState.get('callsign.lastSelectedSpecUrl', null);
                 break;
 
             case 'saveLastSelectedSpecUrl': {
                 const urlPayload = payload as { urlId: string };
                 const { urlId } = urlPayload;
-                await context.globalState.update('callsign.lastSelectedSpecUrl', urlId);
+                await context.workspaceState.update('callsign.lastSelectedSpecUrl', urlId);
                 data = { success: true };
                 break;
             }
 
             case 'makeRequest':
                 data = await makeAuthenticatedRequest(payload, authService);
+                break;
+
+            case 'vueAppReady':
+                const lastSelectedSpecUrl = context.workspaceState.get<string>('callsign.lastSelectedSpecUrl');
+                const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
+                const selectedRoute = context.workspaceState.get<OpenApiRoute | null>('callsign.selectedRoute');
+                const authIdDown = context.workspaceState.get<string>('callsign.selectedAuthId');
+
+                data = {
+                    selectedSpecUrl: lastSelectedSpecUrl || null,
+                    openApiSpec: cachedSpec,
+                    selectedRoute: selectedRoute,
+                    selectedAuthId: authIdDown,
+                };
+
                 break;
 
             default:

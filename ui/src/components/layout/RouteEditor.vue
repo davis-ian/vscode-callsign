@@ -2,7 +2,7 @@
     <div class="flex-grow flex">
         <RequestPanel
             @send-request="data => initSendRequest(data)"
-            :route="selectedRoute"
+            :route="specStore.selectedRoute"
             :loading="loading"
             class="w-1/2"
         />
@@ -16,21 +16,22 @@ import { ref } from 'vue';
 import RequestPanel from '../RequestPanel.vue';
 import ResponsePanel from '../ResponsePanel.vue';
 
-import { useSelectedRoute } from '@/composables/SelectedRouteSymbol';
 import type { ApiResponse } from '@/types';
-const selectedRoute = useSelectedRoute();
+
+const specStore = useSpecStore();
 
 import { sendRequest } from '@/services/RequestService';
+import { useSpecStore } from '@/stores/spec';
 const loading = ref(false);
 const response = ref<ApiResponse | null>(null);
 
 async function initSendRequest(requestData: any) {
-    if (!selectedRoute.value) return;
+    if (!specStore.selectedRoute) return;
 
     console.log(requestData, 'initing request');
     try {
         response.value = await sendRequest(
-            selectedRoute.value,
+            specStore.selectedRoute,
             requestData.params,
             requestData.authId,
             requestData.body,

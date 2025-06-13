@@ -63,16 +63,6 @@ async function updateAuthPreview() {
     }
 }
 
-async function setDefaultAuth() {
-    if (props.modelValue) return;
-
-    const authWithToken = availableAuth.value.find(auth => hasValidToken(auth));
-    if (authWithToken) {
-        console.log(`auth selected auth method ${authWithToken.displayName}`);
-        emit('update:modelValue', authWithToken.id);
-    }
-}
-
 async function loadAuthHeaders() {
     const headers: Record<string, AuthHeader | null> = {};
 
@@ -88,10 +78,10 @@ async function loadAuthHeaders() {
     authHeaders.value = headers;
 }
 
-function hasValidToken(auth: AuthMethod) {
-    const header = authHeaders.value[auth.id];
-    return header?.value ? header.value.trim().length > 0 : false;
-}
+// function hasValidToken(auth: AuthMethod) {
+//     const header = authHeaders.value[auth.id];
+//     return header?.value ? header.value.trim().length > 0 : false;
+// }
 
 onMounted(async () => {
     try {
@@ -99,9 +89,12 @@ onMounted(async () => {
 
         console.log(availableAuth, 'available auth');
 
-        await loadAuthHeaders();
+        console.log(selectedAuthId, 'selectedAuthId @ currentauthselect mount');
 
-        await setDefaultAuth();
+        await loadAuthHeaders();
+        updateAuthPreview();
+
+        // await setDefaultAuth();
     } catch (err) {
         console.error('Failed to load auth methods:', err);
     }

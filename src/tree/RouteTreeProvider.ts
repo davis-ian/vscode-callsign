@@ -28,7 +28,6 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
         this._onDidChangeTreeData.fire(undefined);
 
         console.log('updating last selected: ', spec.path);
-        await context.globalState.update('callsign.lastSelectedSpecUrl', spec.path);
     }
 
     getTreeItem(element: RouteTreeItem): vscode.TreeItem {
