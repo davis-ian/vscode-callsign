@@ -56,14 +56,17 @@
             {
                 "command": "callsign.pinRoute",
                 "title": "Pin Route",
-                "category": "Callsign",
-                "enablement": "false"
+                "category": "Callsign"
             },
             {
                 "command": "callsign.unpinRoute",
                 "title": "Unpin Route",
-                "category": "Callsign",
-                "enablement": "false"
+                "category": "Callsign"
+            },
+            {
+                "command": "callsign.copyAsCurl",
+                "title": "Copy as cURL",
+                "category": "Callsign"
             }
         ],
         "views": {
@@ -83,6 +86,11 @@
                 {
                     "command": "callsign.unpinRoute",
                     "when": "view == callsign.routes && viewItem == routePinned"
+                },
+                {
+                    "command": "callsign.copyAsCurl",
+                    "when": "view == callsign.routes && viewItem == routePinned || viewItem == routeUnpinned",
+                    "group": "inline"
                 }
             ]
         },
