@@ -4,6 +4,7 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import { CodeGenConfig, CodeGenResult, OpenApiSpec } from '../types';
 import { updateStatusBar } from '../core/statusBar';
+import { logError, logInfo } from '../core/logger';
 
 export async function generateCode(config: CodeGenConfig): Promise<CodeGenResult> {
     if (config.generator === '@openapitools/openapi-generator-cli') {
@@ -29,7 +30,7 @@ export async function generateCode(config: CodeGenConfig): Promise<CodeGenResult
 }
 
 async function generateWithTypescriptCodegen(config: CodeGenConfig): Promise<CodeGenResult> {
-    console.log('generating  w/ typescript');
+    logInfo('generating  w/ typescript');
 
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!workspaceRoot) {
@@ -44,7 +45,7 @@ async function generateWithTypescriptCodegen(config: CodeGenConfig): Promise<Cod
 }
 
 async function generateWithOpenApiGeneratorCli(config: CodeGenConfig): Promise<CodeGenResult> {
-    console.log('generating with OpenAPI Generator CLI (Docker mode)');
+    logInfo('generating with OpenAPI Generator CLI (Docker mode)');
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!workspaceRoot) {
         throw new Error('No workspace folder found');
@@ -109,7 +110,7 @@ async function generateWithDockerDirectly(
 ): Promise<CodeGenResult> {
     const startTime = Date.now();
 
-    console.log('Using direct Docker command for URL input');
+    logInfo('Using direct Docker command for URL input');
 
     // For URLs, we don't need to map the input as a volume
     const dockerArgs = [
@@ -127,7 +128,7 @@ async function generateWithDockerDirectly(
         generatorName,
     ];
 
-    console.log('Docker command:', 'docker', dockerArgs.join(' '));
+    logInfo('Docker command:', 'docker', dockerArgs.join(' '));
 
     return new Promise(resolve => {
         const child = spawn('docker', dockerArgs, {
@@ -141,26 +142,26 @@ async function generateWithDockerDirectly(
         child.stdout?.on('data', data => {
             const dataStr = data.toString();
             output += dataStr;
-            console.log('DOCKER STDOUT:', dataStr);
+            logInfo('DOCKER STDOUT:', dataStr);
         });
 
         child.stderr?.on('data', data => {
             const dataStr = data.toString();
             error += dataStr;
-            console.error('DOCKER STDERR:', dataStr);
+            logError('DOCKER STDERR:', dataStr);
         });
 
         child.on('close', code => {
             const duration = Date.now() - startTime;
             const success = code === 0;
 
-            console.log('Docker command completed with code:', code);
+            logInfo('Docker command completed with code:', code);
 
             // Check if files were generated
             let files: string[] = [];
             if (success) {
                 files = getGeneratedFiles(workspaceRoot, config.output);
-                console.log('Generated files:', files.length > 0 ? 'Yes' : 'No');
+                logInfo('Generated files:', files.length > 0 ? 'Yes' : 'No');
             }
 
             resolve({
@@ -173,7 +174,7 @@ async function generateWithDockerDirectly(
         });
 
         child.on('error', err => {
-            console.error('DOCKER SPAWN ERROR:', err);
+            logError('DOCKER SPAWN ERROR:', err);
             resolve({
                 success: false,
                 error: `Docker command execution error: ${err.message}`,
@@ -223,9 +224,9 @@ async function ensureCodeGenInstalled(workspaceRoot: string, generator: string):
                 ? '@openapitools/openapi-generator-cli'
                 : 'openapi-typescript-codegen';
 
-        console.log('ensuring installed', generator);
+        logInfo('ensuring installed', generator);
         const hasCodeGen = packageJson.devDependencies?.[pkgName] || packageJson.dependencies?.[pkgName];
-        console.log('has code  gen', hasCodeGen);
+        logInfo('has code  gen', hasCodeGen);
 
         if (!hasCodeGen) {
             const install = await vscode.window.showInformationMessage(
@@ -299,7 +300,7 @@ async function executeCodeGen(workspaceRoot: string, args: string[], config: Cod
     return new Promise(resolve => {
         const startTime = Date.now();
 
-        console.log(args, 'cmd args');
+        logInfo(args, 'cmd args');
 
         // Use npx to run the command
         const child = spawn('npx', args, {
@@ -367,7 +368,7 @@ function getGeneratedFiles(workspaceRoot: string, outputDir: string): string[] {
 
         scanDir(fullOutputPath);
     } catch (error) {
-        console.error('failed to scan generated files: ', error);
+        logError('failed to scan generated files: ', error);
     }
 
     return files;
@@ -378,7 +379,7 @@ async function installCodeGen(workspaceRoot: string, generator: string): Promise
         const pkg = resolvePackageName(generator);
 
         const command = 'npm install --save-dev ' + pkg + ' -D';
-        console.log('INSTALLING  CODEGEN: ', command);
+        logInfo('INSTALLING  CODEGEN: ', command);
         const child = spawn('npm', ['install', '--save-dev', pkg], {
             cwd: workspaceRoot,
             shell: true,

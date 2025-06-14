@@ -9,7 +9,7 @@ import { registerCommands } from './commands/registerCommands';
 import { loadJsonFromUrl } from './utils/fetchJson';
 
 import { initStatusBar, updateStatusBar } from './core/statusBar';
-import { dumpSpecToDisk } from './utils/debugging';
+import { initLogger, logInfo } from './core/logger';
 
 let currentSpec: OpenApiSpec | undefined;
 
@@ -18,7 +18,9 @@ let currentSpec: OpenApiSpec | undefined;
 export async function activate(context: vscode.ExtensionContext) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
-    console.log('Callsign extension activated');
+
+    initLogger();
+    logInfo('Callsign extension activated');
 
     initStatusBar(context);
     updateStatusBar('no-spec');
@@ -45,7 +47,7 @@ async function loadDefaultJson(context: vscode.ExtensionContext): Promise<OpenAp
     const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
 
     if (cachedSpec) {
-        console.log('returning cached spec for: ', lastSelectedSpecUrl);
+        logInfo('returning cached spec for: ', lastSelectedSpecUrl);
         return cachedSpec;
     }
 

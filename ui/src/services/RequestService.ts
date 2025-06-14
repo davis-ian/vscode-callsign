@@ -38,7 +38,6 @@ export async function sendRequest(
     const path = route.path.replace(/{(.+?)}/g, (_match, name) => paramInputs[name] || `{${name}}`);
 
     console.log(route, 'ROUTE');
-    console.log(specStore, 'spec store');
 
     const baseUrl = specStore?.currentSpec?.servers?.[0].url;
 

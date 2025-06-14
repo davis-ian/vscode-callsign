@@ -13,9 +13,7 @@ import { generateCode } from './codeGenCommand';
 import { updateStatusBar } from '../core/statusBar';
 import { togglePin } from '../core/pinnedRoutes';
 import { RouteTreeItem } from '../tree/RouteTreeItem';
-// import { encodePathForUrl } from '../utils/encode';
-
-// let webviewPanel: vscode.WebviewPanel | undefined;
+import { logInfo, showLogs } from '../core/logger';
 
 export function registerCommands(context: vscode.ExtensionContext, routeTreeProvider: RouteTreeProvider) {
     context.subscriptions.push(
@@ -23,9 +21,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             const rawSpec = routeTreeProvider.getCurrentSpec();
             if (rawSpec) routeTreeProvider.setRoutes(rawSpec, context);
         }),
-    );
 
-    context.subscriptions.push(
         vscode.commands.registerCommand('callsign.openRoute', async (route: OpenApiRoute) => {
             vscode.window.showInformationMessage(`Route: ${route.method.toUpperCase()} ${route.path}`);
 
@@ -46,219 +42,166 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 context.subscriptions,
             );
         }),
-    );
 
-    vscode.commands.registerCommand('callsign.openHistoryPage', () => {
-        vscode.commands.executeCommand('callsign.openWebviewPanel', '/history');
-    });
-
-    vscode.commands.registerCommand('callsign.openWebviewPanel', async (initialRoute?: string) => {
-        const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
-            enableScripts: true,
-            retainContextWhenHidden: true,
-        });
-
-        panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
-
-        panel.webview.onDidReceiveMessage(
-            message => handleMessage(message, panel, context),
-            undefined,
-            context.subscriptions,
-        );
-
-        if (initialRoute) {
-            panel.webview.onDidReceiveMessage(() => {
-                panel.webview.postMessage({
-                    command: 'navigateTo',
-                    path: initialRoute,
-                });
-            });
-        }
-    });
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('callsign.pinRoute', async (item: RouteTreeItem) => {
-            if (item.route) {
-                await togglePin(item.route, context);
-                routeTreeProvider.refresh(); // You'll add this
-            }
+        vscode.commands.registerCommand('callsign.openHistoryPage', () => {
+            vscode.commands.executeCommand('callsign.openWebviewPanel', '/history');
         }),
-        vscode.commands.registerCommand('callsign.unpinRoute', async (item: RouteTreeItem) => {
-            if (item.route) {
-                await togglePin(item.route, context);
-                routeTreeProvider.refresh();
-            }
-        }),
-    );
 
-    // // Register the openRoute command
-    // context.subscriptions.push(
-    //     scode.commands.registerCommand('callsign.openRoute', (route: OpenApiRoute) => {
-    //         openRouteInWebview(context, route);
-    //     }),
-    // );
-
-    vscode.commands.registerCommand('callsign.generateCode', async () => {
-        const lastOutputKey = 'callsign.lastOutputDir';
-        try {
-            updateStatusBar('generating');
-            const savedSpecs = vscode.workspace.getConfiguration('callsign').get<Array<string>>('specUrls');
-
-            if (!savedSpecs || savedSpecs.length === 0) {
-                vscode.window.showWarningMessage('No saved spec URLs found.');
-                return;
-            }
-
-            const jsonUrl = await vscode.window.showQuickPick(savedSpecs, {
-                placeHolder: 'Select a saved OpenAPI spec URL',
+        vscode.commands.registerCommand('callsign.openWebviewPanel', async (initialRoute?: string) => {
+            const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
+                enableScripts: true,
+                retainContextWhenHidden: true,
             });
-            if (!jsonUrl) return;
 
-            // Step 1: Show recent or common folders
-            const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-            const commonOptions = ['src', 'src/generated-api', 'generated', 'api'].map(p =>
-                path.join(workspaceFolder!, p),
+            panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
+
+            panel.webview.onDidReceiveMessage(
+                message => handleMessage(message, panel, context),
+                undefined,
+                context.subscriptions,
             );
-            const lastUsed = context.workspaceState.get<string>(lastOutputKey);
 
-            const folderOptions = [...(lastUsed ? [lastUsed] : []), ...commonOptions, 'Other (Enter custom path...)'];
+            if (initialRoute) {
+                panel.webview.onDidReceiveMessage(() => {
+                    panel.webview.postMessage({
+                        command: 'navigateTo',
+                        path: initialRoute,
+                    });
+                });
+            }
+        }),
+        vscode.commands.registerCommand('callsign.showLogs', () => {
+            showLogs();
+        }),
 
-            const picked = await vscode.window.showQuickPick(folderOptions, {
-                placeHolder: 'Select or enter an output folder',
+        vscode.commands.registerCommand('callsign.quickSearchRoutes', async () => {
+            const allRoutes = routeTreeProvider.getAllRoutes(); // You'll expose this getter
+            const items = allRoutes.map(route => ({
+                label: `${route.method.toUpperCase()} ${route.path}`,
+                description: route.details?.summary || '',
+                route,
+            }));
+
+            const picked = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Search API route...',
+                matchOnDescription: true,
+                matchOnDetail: true,
             });
 
-            let outputPath: string | undefined;
+            if (picked) {
+                vscode.commands.executeCommand('callsign.openRoute', picked.route);
+            }
+        }),
 
-            if (!picked) return;
+        vscode.commands.registerCommand('callsign.generateCode', async () => {
+            const lastOutputKey = 'callsign.lastOutputDir';
+            try {
+                updateStatusBar('generating');
+                const savedSpecs = vscode.workspace.getConfiguration('callsign').get<Array<string>>('specUrls');
 
-            if (picked === 'Other (Enter custom path...)') {
-                outputPath = await vscode.window.showInputBox({
-                    prompt: 'Enter output folder path',
-                    value: path.join(workspaceFolder!, 'src', 'generated-api'),
-                    ignoreFocusOut: true,
-                    validateInput: input => (input.trim() === '' ? 'Path cannot be empty' : undefined),
+                if (!savedSpecs || savedSpecs.length === 0) {
+                    vscode.window.showWarningMessage('No saved spec URLs found.');
+                    return;
+                }
+
+                const jsonUrl = await vscode.window.showQuickPick(savedSpecs, {
+                    placeHolder: 'Select a saved OpenAPI spec URL',
+                });
+                if (!jsonUrl) return;
+
+                // Step 1: Show recent or common folders
+                const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+                const commonOptions = ['src', 'src/generated-api', 'generated', 'api'].map(p =>
+                    path.join(workspaceFolder!, p),
+                );
+                const lastUsed = context.workspaceState.get<string>(lastOutputKey);
+
+                const folderOptions = [
+                    ...(lastUsed ? [lastUsed] : []),
+                    ...commonOptions,
+                    'Other (Enter custom path...)',
+                ];
+
+                const picked = await vscode.window.showQuickPick(folderOptions, {
+                    placeHolder: 'Select or enter an output folder',
                 });
 
-                if (!outputPath) return;
-            } else {
-                outputPath = picked;
-            }
+                let outputPath: string | undefined;
 
-            // Ensure folder exists
-            if (!fs.existsSync(outputPath)) {
-                fs.mkdirSync(outputPath, { recursive: true });
-            }
+                if (!picked) return;
 
-            await context.workspaceState.update(lastOutputKey, outputPath);
-
-            const outputUri = await vscode.window.showOpenDialog({
-                canSelectFolders: true,
-                openLabel: 'Select output folder',
-            });
-            if (!outputUri || !outputUri[0]) return;
-
-            const clientType = (await vscode.window.showQuickPick(['fetch', 'axios', 'node', 'xhr'], {
-                placeHolder: 'Select client type',
-            })) as 'fetch' | 'axios' | 'node' | 'xhr';
-            if (!clientType) return;
-
-            // const generatorType = await vscode.window.showQuickPick(
-            //     ['openapi-typescript-codegen', 'openapi-generator-cli'],
-            //     { placeHolder: 'Select generator' },
-            // );
-            // if (!generatorType) return;
-
-            await vscode.window.withProgress(
-                {
-                    location: vscode.ProgressLocation.Notification,
-                    title: 'Generating client code...',
-                    cancellable: false,
-                },
-                async () => {
-                    const response = await generateCode({
-                        generator: 'openapi-typescript-codegen',
-                        language: 'ts',
-                        input: jsonUrl,
-                        output: outputUri[0].fsPath,
-                        client: clientType,
+                if (picked === 'Other (Enter custom path...)') {
+                    outputPath = await vscode.window.showInputBox({
+                        prompt: 'Enter output folder path',
+                        value: path.join(workspaceFolder!, 'src', 'generated-api'),
+                        ignoreFocusOut: true,
+                        validateInput: input => (input.trim() === '' ? 'Path cannot be empty' : undefined),
                     });
 
-                    if (response.success) {
-                        const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
-                        if (cachedSpec) {
-                            updateStatusBar('idle', cachedSpec.paths.length, 0);
+                    if (!outputPath) return;
+                } else {
+                    outputPath = picked;
+                }
+
+                // Ensure folder exists
+                if (!fs.existsSync(outputPath)) {
+                    fs.mkdirSync(outputPath, { recursive: true });
+                }
+
+                await context.workspaceState.update(lastOutputKey, outputPath);
+
+                const outputUri = await vscode.window.showOpenDialog({
+                    canSelectFolders: true,
+                    openLabel: 'Select output folder',
+                });
+                if (!outputUri || !outputUri[0]) return;
+
+                const clientType = (await vscode.window.showQuickPick(['fetch', 'axios', 'node', 'xhr'], {
+                    placeHolder: 'Select client type',
+                })) as 'fetch' | 'axios' | 'node' | 'xhr';
+                if (!clientType) return;
+
+                await vscode.window.withProgress(
+                    {
+                        location: vscode.ProgressLocation.Notification,
+                        title: 'Generating client code...',
+                        cancellable: false,
+                    },
+                    async () => {
+                        const response = await generateCode({
+                            generator: 'openapi-typescript-codegen',
+                            language: 'ts',
+                            input: jsonUrl,
+                            output: outputUri[0].fsPath,
+                            client: clientType,
+                        });
+
+                        if (response.success) {
+                            const cachedSpec = context.workspaceState.get<OpenApiSpec | null>(
+                                'callsign.cachedSpec',
+                                null,
+                            );
+                            if (cachedSpec) {
+                                updateStatusBar('idle', cachedSpec.paths.length, 0);
+                            }
+
+                            vscode.window.showInformationMessage('Code generation completed successfully!');
+                        } else {
+                            vscode.window.showErrorMessage(`Generation failed: ${response.error}`);
+                            updateStatusBar('error');
                         }
-
-                        vscode.window.showInformationMessage('Code generation completed successfully!');
-                    } else {
-                        vscode.window.showErrorMessage(`Generation failed: ${response.error}`);
-                        updateStatusBar('error');
-                    }
-                    // console.log('generator', generatorType);
-                    console.log('input', jsonUrl);
-                    console.log('output', outputUri[0].fsPath);
-                    console.log('client', clientType);
-                },
-            );
-        } catch (err: any) {
-            vscode.window.showErrorMessage(`Unexpected error: ${err.message || err}`);
-            updateStatusBar('error');
-        }
-    });
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('callsign.showRoutesView', () => {
-            vscode.commands.executeCommand('workbench.views.explorer.callsign.routes');
-        }),
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('callsign.showCommands', async () => {
-            const selection = await vscode.window.showQuickPick(
-                [
-                    {
-                        label: '📄 Load OpenAPI Spec',
-                        description: 'Load or refresh your OpenAPI spec',
-                        command: 'callsign.loadRoutesFromSavedSpec',
+                        // console.log('generator', generatorType);
+                        logInfo('input', jsonUrl);
+                        logInfo('output', outputUri[0].fsPath);
+                        logInfo('client', clientType);
                     },
-                    {
-                        label: '🔍 Search Routes',
-                        description: 'Search routes in your OpenAPI spec',
-                        command: 'callsign.quickSearchRoutes',
-                    },
-                    {
-                        label: '🚀 Generate API Client Code',
-                        description: 'Run code generation for current spec',
-                        command: 'callsign.generateCode',
-                    },
-                    {
-                        label: '⏳ View Request History',
-                        description: 'Run code generation for current spec',
-                        command: 'callsign.openHistoryPage',
-                    },
-                    // {
-                    //     label: '📌 View Pinned Routes',
-                    //     description: 'See your pinned endpoints',
-                    //     command: 'callsign.viewPinnedRoutes',
-                    // },
-                    // {
-                    //     label: '🔄 Reload Extension',
-                    //     description: 'Reload Callsign extension window',
-                    //     command: 'workbench.action.reloadWindow',
-                    // },
-                ],
-                {
-                    placeHolder: 'Select a Callsign command',
-                },
-            );
-
-            if (selection?.command) {
-                vscode.commands.executeCommand(selection.command);
+                );
+            } catch (err: any) {
+                vscode.window.showErrorMessage(`Unexpected error: ${err.message || err}`);
+                updateStatusBar('error');
             }
         }),
-    );
 
-    context.subscriptions.push(
         vscode.commands.registerCommand('callsign.addSpecUrl', async () => {
             const url = await vscode.window.showInputBox({
                 prompt: 'Enter the OpenAPI Spec URL',
@@ -277,9 +220,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 }
             }
         }),
-    );
 
-    context.subscriptions.push(
         vscode.commands.registerCommand('callsign.deleteSpecUrlFromSettings', async () => {
             const configuredUrls = getConfiguredSpecUrls();
 
@@ -307,15 +248,26 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
 
             vscode.window.showInformationMessage(`Deleted ${picked.spec.name} from Callsign spec URLs.`);
         }),
-    );
 
-    context.subscriptions.push(
         vscode.commands.registerCommand('callsign.openSettings', () => {
             vscode.commands.executeCommand('workbench.action.openSettings', '@ext:yourPublisher.callsign');
         }),
-    );
 
-    context.subscriptions.push(
+        // Non command pallet commands
+        vscode.commands.registerCommand('callsign.pinRoute', async (item: RouteTreeItem) => {
+            if (item.route) {
+                await togglePin(item.route, context);
+                routeTreeProvider.refresh(); // You'll add this
+            }
+        }),
+
+        vscode.commands.registerCommand('callsign.unpinRoute', async (item: RouteTreeItem) => {
+            if (item.route) {
+                await togglePin(item.route, context);
+                routeTreeProvider.refresh();
+            }
+        }),
+
         vscode.commands.registerCommand('callsign.loadRoutesFromSavedSpec', async () => {
             const savedSpecs = vscode.workspace.getConfiguration('callsign').get<Array<string>>('specUrls');
 
@@ -342,30 +294,11 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 vscode.window.showErrorMessage(`Failed to load spec: ${(err as Error).message}`);
             }
         }),
-    );
 
-    context.subscriptions.push(
-        vscode.commands.registerCommand('callsign.quickSearchRoutes', async () => {
-            const allRoutes = routeTreeProvider.getAllRoutes(); // You'll expose this getter
-            const items = allRoutes.map(route => ({
-                label: `${route.method.toUpperCase()} ${route.path}`,
-                description: route.details?.summary || '',
-                route,
-            }));
-
-            const picked = await vscode.window.showQuickPick(items, {
-                placeHolder: 'Search API route...',
-                matchOnDescription: true,
-                matchOnDetail: true,
-            });
-
-            if (picked) {
-                vscode.commands.executeCommand('callsign.openRoute', picked.route);
-            }
+        vscode.commands.registerCommand('callsign.showRoutesView', () => {
+            vscode.commands.executeCommand('workbench.views.explorer.callsign.routes');
         }),
-    );
 
-    context.subscriptions.push(
         vscode.commands.registerCommand('callsign.openPanel', () => {
             const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
                 enableScripts: true,
@@ -380,58 +313,59 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 context.subscriptions,
             );
         }),
+
+        vscode.commands.registerCommand('callsign.showCommands', async () => {
+            const selection = await vscode.window.showQuickPick(
+                [
+                    {
+                        label: '$(file-code) Load OpenAPI Spec',
+                        description: 'Load or refresh your OpenAPI spec',
+                        command: 'callsign.loadRoutesFromSavedSpec',
+                    },
+                    {
+                        label: '$(search) Search Routes',
+                        description: 'Search routes in your OpenAPI spec',
+                        command: 'callsign.quickSearchRoutes',
+                    },
+                    {
+                        label: '$(rocket) Generate API Client Code',
+                        description: 'Run code generation for current spec',
+                        command: 'callsign.generateCode',
+                    },
+                    {
+                        label: '$(clock) View Request History',
+                        description: 'View previous requests you’ve made',
+                        command: 'callsign.openHistoryPage',
+                    },
+                    {
+                        label: '$(cloud-upload) Add Spec URL',
+                        description: 'Save new OpenAPI spec URL',
+                        command: 'callsign.addSpecUrl',
+                    },
+                    {
+                        label: '$(trash) Remove Spec URL',
+                        description: 'Delete saved OpenAPI spec URL',
+                        command: 'callsign.deleteSpecUrlFromSettings',
+                    },
+                    {
+                        label: '$(gear) Settings',
+                        description: 'Open Callsign extension settings',
+                        command: 'callsign.openSettings',
+                    },
+                    {
+                        label: '$(output) Show Logs',
+                        description: 'Open Callsign output channel logs',
+                        command: 'callsign.showLogs',
+                    },
+                ],
+                {
+                    placeHolder: 'Select a Callsign command',
+                },
+            );
+
+            if (selection?.command) {
+                vscode.commands.executeCommand(selection.command);
+            }
+        }),
     );
 }
-
-// export function openRouteInWebview(
-//     context: vscode.ExtensionContext,
-//     route: OpenApiRoute,
-//     webviewPanel: vscode.WebviewPanel | undefined,
-// ) {
-//     console.log('OPEN ROUTE TRIGGEREDL: ', route);
-//     // Create or show the webview panel
-//     if (webviewPanel) {
-//         webviewPanel.reveal(vscode.ViewColumn.One);
-//     } else {
-//         webviewPanel = vscode.window.createWebviewPanel(
-//             'callsignApiTester',
-//             'Callsign API Tester',
-//             vscode.ViewColumn.One,
-//             {
-//                 enableScripts: true,
-//                 retainContextWhenHidden: true,
-//                 localResourceRoots: [
-//                     vscode.Uri.joinPath(context.extensionUri, 'ui-dist'),
-//                     vscode.Uri.joinPath(context.extensionUri, 'webview'),
-//                 ],
-//             },
-//         );
-
-//         // Handle webview disposal
-//         webviewPanel.onDidDispose(
-//             () => {
-//                 webviewPanel = undefined;
-//             },
-//             null,
-//             context.subscriptions,
-//         );
-
-//         console.log('GETTING WEBVIEW HTML');
-//         // Set the webview's HTML content using existing function
-//         webviewPanel.webview.html = getWebviewContent(webviewPanel.webview, context.extensionUri, context);
-//     }
-
-//     // Navigate to the specific route using URL hash
-//     if (route) {
-//         const encodedPath = encodePathForUrl(route.path);
-//         const routeUrl = `/route/${route.method.toLowerCase()}/${encodedPath}`;
-
-//         console.log(routeUrl, 'route url');
-
-//         // Send navigation message to webview
-//         webviewPanel.webview.postMessage({
-//             command: 'navigate',
-//             url: routeUrl,
-//         });
-//     }
-// }

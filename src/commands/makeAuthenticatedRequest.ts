@@ -1,3 +1,4 @@
+import { logInfo } from '../core/logger';
 import { AuthService } from '../services/AuthService';
 
 export async function makeAuthenticatedRequest(payload: any, authService: AuthService) {
@@ -36,7 +37,7 @@ export async function makeAuthenticatedRequest(payload: any, authService: AuthSe
 
     try {
         const text = await response.text();
-        console.log('Raw response text:', text);
+        logInfo('Raw response text:', text);
 
         if (!text || text.trim() === '') {
             // Empty response - create a meaningful error message
@@ -73,7 +74,7 @@ export async function makeAuthenticatedRequest(payload: any, authService: AuthSe
         };
     }
 
-    console.log('Final response body:', responseBody);
+    logInfo('Final response body:', responseBody);
 
     return {
         status: response.status,

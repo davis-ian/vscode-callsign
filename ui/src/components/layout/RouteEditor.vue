@@ -22,6 +22,7 @@ const specStore = useSpecStore();
 
 import { sendRequest } from '@/services/RequestService';
 import { useSpecStore } from '@/stores/spec';
+
 const loading = ref(false);
 const response = ref<ApiResponse | null>(null);
 
@@ -38,7 +39,7 @@ async function initSendRequest(requestData: any) {
 
         // response.value = typeof result.body === 'object' ? JSON.stringify(result.body, null, 2) : result.body;
     } catch (err: any) {
-        console.log(err, 'request error');
+        logInfo(err, 'request error');
         response.value = err;
     }
 }

@@ -15,39 +15,55 @@
         "commands": [
             {
                 "command": "callsign.addSpecUrl",
-                "title": "Callsign: Add Spec Url"
+                "title": "Add Spec Url",
+                "category": "Callsign"
             },
             {
                 "command": "callsign.deleteSpecUrlFromSettings",
-                "title": "Callsign: Delete Spec Url"
+                "title": "Delete Spec Url",
+                "category": "Callsign"
             },
             {
                 "command": "callsign.openSettings",
-                "title": "Callsign: Open Settings"
+                "title": "Open Settings",
+                "category": "Callsign"
             },
             {
                 "command": "callsign.loadRoutesFromSavedSpec",
-                "title": "Callsign: Load Routes from Spec"
+                "title": "Load Routes from Spec",
+                "category": "Callsign"
             },
             {
                 "command": "callsign.quickSearchRoutes",
-                "title": "Callsign: Search Routes"
+                "title": "Search Routes",
+                "category": "Callsign"
             },
             {
                 "command": "callsign.openHistoryPage",
-                "title": "Callsign: Request History"
+                "title": "Request History",
+                "category": "Callsign"
             },
             {
                 "command": "callsign.generateCode",
-                "title": "Callsign: Generate API Client"
+                "title": "Generate API Client",
+                "category": "Callsign"
+            },
+            {
+                "command": "callsign.showLogs",
+                "title": "Show Logs",
+                "category": "Callsign"
             },
             {
                 "command": "callsign.pinRoute",
-                "title": "Pin Route"
+                "title": "Pin Route",
+                "category": "Callsign",
+                "enablement": "false"
             },
             {
                 "command": "callsign.unpinRoute",
-                "title": "Unpin Route"
+                "title": "Unpin Route",
+                "category": "Callsign",
+                "enablement": "false"
             }
         ],
         "views": {
