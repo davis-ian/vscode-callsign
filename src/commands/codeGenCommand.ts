@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import * as fs from 'fs';
-import { CodeGenConfig, CodeGenResult } from '../types';
+import { CodeGenConfig, CodeGenResult, OpenApiSpec } from '../types';
+import { updateStatusBar } from '../core/statusBar';
 
 export async function generateCode(config: CodeGenConfig): Promise<CodeGenResult> {
     if (config.generator === '@openapitools/openapi-generator-cli') {
@@ -29,6 +30,7 @@ export async function generateCode(config: CodeGenConfig): Promise<CodeGenResult
 
 async function generateWithTypescriptCodegen(config: CodeGenConfig): Promise<CodeGenResult> {
     console.log('generating  w/ typescript');
+
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!workspaceRoot) {
         throw new Error('No workspace folder found');

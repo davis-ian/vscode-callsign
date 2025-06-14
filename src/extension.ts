@@ -3,12 +3,13 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 
-import { OpenApiRoute, OpenApiSpec } from './types';
+import { OpenApiSpec } from './types';
 import { RouteTreeProvider } from './tree/RouteTreeProvider';
 import { registerCommands } from './commands/registerCommands';
 import { loadJsonFromUrl } from './utils/fetchJson';
-import { getWebviewContent } from './utils/getWebviewContent';
-import { encodePathForUrl } from './utils/encode';
+
+import { initStatusBar, updateStatusBar } from './core/statusBar';
+import { dumpSpecToDisk } from './utils/debugging';
 
 let currentSpec: OpenApiSpec | undefined;
 
@@ -19,9 +20,16 @@ export async function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Callsign extension activated');
 
+    initStatusBar(context);
+    updateStatusBar('no-spec');
     let rawSpec: OpenApiSpec | undefined = await loadDefaultJson(context);
 
-    const routeTreeProvider = new RouteTreeProvider(rawSpec);
+    // if (rawSpec) {
+    //     dumpSpecToDisk(rawSpec, context);
+    //     updateStatusBar('idle', rawSpec.paths.length, 0);
+    // }
+
+    const routeTreeProvider = new RouteTreeProvider(rawSpec, context);
 
     vscode.window.registerTreeDataProvider('callsign.routes', routeTreeProvider);
 

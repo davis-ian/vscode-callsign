@@ -1,3 +1,4 @@
+import { updateStatusBar } from '../core/statusBar';
 import { OpenApiRoute, OpenApiSpec } from '../types';
 
 export async function loadJsonFromUrl(url: string) {
@@ -10,6 +11,11 @@ export async function loadJsonFromUrl(url: string) {
     const jsonData = await response.json();
     let result = jsonData as OpenApiSpec;
     result.path = url;
+
+    let pinnedRoutes = [];
+    let totalRoutes = result.paths.length;
+
+    updateStatusBar('idle', totalRoutes, pinnedRoutes.length);
 
     return result;
 }

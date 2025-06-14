@@ -1,6 +1,8 @@
 import type { ApiResponse, OpenApiRoute } from '@/types';
 import { extensionBridge } from './ExtensionBridge';
 import { useRequestHistory } from '@/composables/useRequestHistory';
+import { useSpecStore } from '@/stores/spec';
+
 const { addSnapshot } = useRequestHistory();
 
 export async function sendRequest(
@@ -31,16 +33,43 @@ export async function sendRequest(
         }
     }
 
+    const specStore = useSpecStore();
     // Replace path params
     const path = route.path.replace(/{(.+?)}/g, (_match, name) => paramInputs[name] || `{${name}}`);
 
+    console.log(route, 'ROUTE');
+    console.log(specStore, 'spec store');
+
+    const baseUrl = specStore?.currentSpec?.servers?.[0].url;
+
+    console.log(baseUrl, 'baase url');
+
+    const specUrl = specStore.currentSpec?.path;
+    const serverUrl = specStore.currentSpec?.servers?.[0]?.url ?? '/';
+    if (!specUrl || !serverUrl) {
+        throw new Error('Invalid  spec or server url');
+    }
+    const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+
     const endpoint = {
-        url: `https://api-develop.memoryshare.com${path}`,
+        url: `${resolvedBaseUrl}${path}`,
         method: route.method,
     };
 
     // Make authenticated request through extension bridge
     const rawParams = { ...paramInputs };
+
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+    };
+
+    if (authId) {
+        const authHeaders = await extensionBridge.getAuthHeader(authId);
+        Object.assign(headers, authHeaders);
+    }
+
+    const curl = buildCurlCommand(route.method, endpoint.url, headers, body);
+
     const result = await extensionBridge.makeAuthenticatedRequest(endpoint, authId || undefined, body, rawParams);
 
     addSnapshot({
@@ -54,7 +83,41 @@ export async function sendRequest(
         queryParams: rawParams,
         fullUrl: endpoint.url,
         route: route,
+        curl: curl,
     });
 
+    result.curl = curl;
     return result;
+}
+
+function buildCurlCommand(method: string, url: string, headers: Record<string, string> = {}, body?: any): string {
+    const parts: string[] = [`curl -X ${method.toUpperCase()}`];
+
+    parts.push(`'${url}'`);
+
+    for (const [key, value] of Object.entries(headers)) {
+        parts.push(`-H '${key}: ${value}'`);
+    }
+
+    if (body) {
+        const json = typeof body === 'string' ? body : JSON.stringify(body, null, 2);
+        parts.push(`--data '${json}'`);
+    }
+
+    return parts.join(' \\\n  ');
+}
+
+function resolveServerUrl(specUrl: string, serverUrl: string): string {
+    try {
+        // Absolute: return as-is
+        if (serverUrl.startsWith('http')) {
+            return serverUrl;
+        }
+
+        // Relative: resolve against the spec origin
+        const base = new URL(specUrl);
+        return new URL(serverUrl, base).toString();
+    } catch {
+        return serverUrl; // Fallback to raw string
+    }
 }

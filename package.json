@@ -40,6 +40,14 @@
             {
                 "command": "callsign.generateCode",
                 "title": "Callsign: Generate API Client"
+            },
+            {
+                "command": "callsign.pinRoute",
+                "title": "Pin Route"
+            },
+            {
+                "command": "callsign.unpinRoute",
+                "title": "Unpin Route"
             }
         ],
         "views": {
@@ -47,6 +55,18 @@
                 {
                     "id": "callsign.routes",
                     "name": "Routes"
+                }
+            ]
+        },
+        "menus": {
+            "view/item/context": [
+                {
+                    "command": "callsign.pinRoute",
+                    "when": "view == callsign.routes && viewItem == routeUnpinned"
+                },
+                {
+                    "command": "callsign.unpinRoute",
+                    "when": "view == callsign.routes && viewItem == routePinned"
                 }
             ]
         },

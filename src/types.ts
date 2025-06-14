@@ -55,8 +55,34 @@ export interface OpenApiSpec {
     info: any;
     paths: Record<string, any>;
     components?: any;
+    servers?: ServerObject[];
+    tags?: TagObject[];
+    externalDocs?: {
+        description?: string;
+        url: string;
+    };
 }
 
+export interface ServerObject {
+    url: string;
+    description?: string;
+    variables?: Record<string, ServerVariable>;
+}
+
+export interface ServerVariable {
+    enum?: string[];
+    default: string;
+    description?: string;
+}
+
+export interface TagObject {
+    name: string;
+    description?: string;
+    externalDocs?: {
+        description?: string;
+        url: string;
+    };
+}
 export interface LoadJsonOptions {
     type: 'file' | 'url' | 'default';
     content?: string;

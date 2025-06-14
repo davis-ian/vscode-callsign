@@ -44,6 +44,7 @@ export interface ApiResponse {
     headers: Record<string, string>;
     body: any;
     timestamp: string;
+    curl?: string;
 }
 
 export interface ApiEndpoint {
@@ -52,10 +53,38 @@ export interface ApiEndpoint {
 }
 
 export interface OpenApiSpec {
+    path: string;
     openapi: string;
     info: any;
     paths: Record<string, any>;
     components?: any;
+    servers?: ServerObject[]; // ✅ NEW
+    tags?: TagObject[]; // ✅ NEW
+    externalDocs?: {
+        description?: string;
+        url: string;
+    };
+}
+
+export interface ServerObject {
+    url: string;
+    description?: string;
+    variables?: Record<string, ServerVariable>;
+}
+
+export interface ServerVariable {
+    enum?: string[];
+    default: string;
+    description?: string;
+}
+
+export interface TagObject {
+    name: string;
+    description?: string;
+    externalDocs?: {
+        description?: string;
+        url: string;
+    };
 }
 
 export interface LoadJsonOptions {
@@ -116,6 +145,7 @@ export interface RequestSnapshot {
     queryParams?: Record<string, string>;
     fullUrl: string;
     route: OpenApiRoute;
+    curl: string;
 }
 
 export interface NavEntry {

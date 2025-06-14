@@ -10,6 +10,9 @@ import { handleMessage } from '../handlers/handleMessage';
 import { getWebviewContent } from '../utils/getWebviewContent';
 import { getConfiguredSpecUrls } from '../utils/settings';
 import { generateCode } from './codeGenCommand';
+import { updateStatusBar } from '../core/statusBar';
+import { togglePin } from '../core/pinnedRoutes';
+import { RouteTreeItem } from '../tree/RouteTreeItem';
 // import { encodePathForUrl } from '../utils/encode';
 
 // let webviewPanel: vscode.WebviewPanel | undefined;
@@ -73,6 +76,21 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
         }
     });
 
+    context.subscriptions.push(
+        vscode.commands.registerCommand('callsign.pinRoute', async (item: RouteTreeItem) => {
+            if (item.route) {
+                await togglePin(item.route, context);
+                routeTreeProvider.refresh(); // You'll add this
+            }
+        }),
+        vscode.commands.registerCommand('callsign.unpinRoute', async (item: RouteTreeItem) => {
+            if (item.route) {
+                await togglePin(item.route, context);
+                routeTreeProvider.refresh();
+            }
+        }),
+    );
+
     // // Register the openRoute command
     // context.subscriptions.push(
     //     scode.commands.registerCommand('callsign.openRoute', (route: OpenApiRoute) => {
@@ -83,6 +101,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
     vscode.commands.registerCommand('callsign.generateCode', async () => {
         const lastOutputKey = 'callsign.lastOutputDir';
         try {
+            updateStatusBar('generating');
             const savedSpecs = vscode.workspace.getConfiguration('callsign').get<Array<string>>('specUrls');
 
             if (!savedSpecs || savedSpecs.length === 0) {
@@ -165,9 +184,15 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                     });
 
                     if (response.success) {
+                        const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
+                        if (cachedSpec) {
+                            updateStatusBar('idle', cachedSpec.paths.length, 0);
+                        }
+
                         vscode.window.showInformationMessage('Code generation completed successfully!');
                     } else {
                         vscode.window.showErrorMessage(`Generation failed: ${response.error}`);
+                        updateStatusBar('error');
                     }
                     // console.log('generator', generatorType);
                     console.log('input', jsonUrl);
@@ -177,12 +202,59 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             );
         } catch (err: any) {
             vscode.window.showErrorMessage(`Unexpected error: ${err.message || err}`);
+            updateStatusBar('error');
         }
     });
 
     context.subscriptions.push(
         vscode.commands.registerCommand('callsign.showRoutesView', () => {
             vscode.commands.executeCommand('workbench.views.explorer.callsign.routes');
+        }),
+    );
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('callsign.showCommands', async () => {
+            const selection = await vscode.window.showQuickPick(
+                [
+                    {
+                        label: '📄 Load OpenAPI Spec',
+                        description: 'Load or refresh your OpenAPI spec',
+                        command: 'callsign.loadRoutesFromSavedSpec',
+                    },
+                    {
+                        label: '🔍 Search Routes',
+                        description: 'Search routes in your OpenAPI spec',
+                        command: 'callsign.quickSearchRoutes',
+                    },
+                    {
+                        label: '🚀 Generate API Client Code',
+                        description: 'Run code generation for current spec',
+                        command: 'callsign.generateCode',
+                    },
+                    {
+                        label: '⏳ View Request History',
+                        description: 'Run code generation for current spec',
+                        command: 'callsign.openHistoryPage',
+                    },
+                    // {
+                    //     label: '📌 View Pinned Routes',
+                    //     description: 'See your pinned endpoints',
+                    //     command: 'callsign.viewPinnedRoutes',
+                    // },
+                    // {
+                    //     label: '🔄 Reload Extension',
+                    //     description: 'Reload Callsign extension window',
+                    //     command: 'workbench.action.reloadWindow',
+                    // },
+                ],
+                {
+                    placeHolder: 'Select a Callsign command',
+                },
+            );
+
+            if (selection?.command) {
+                vscode.commands.executeCommand(selection.command);
+            }
         }),
     );
 
