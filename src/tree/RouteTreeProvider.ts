@@ -15,11 +15,12 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
     private _extensionContext: vscode.ExtensionContext | undefined;
 
     constructor(spec?: OpenApiSpec, context?: vscode.ExtensionContext) {
+        this._extensionContext = context;
+
         if (spec) {
             this.groupedRoutes = groupRoutesByTag(spec);
             this.currentSpec = spec;
             this._routes = Object.values(this.groupedRoutes).flat();
-            this._extensionContext = context;
 
             if (!this._routes.length) {
                 updateStatusBar('no-spec');
@@ -76,7 +77,7 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
 
         // const selected = this._extensionContext?.workspaceState.get<OpenApiRoute>('callsign.selectedRoute');
 
-        // If expanding ⭐ Favorites
+        // If expanding Favorites
         if (element.label === 'Pinned') {
             if (this._extensionContext) {
                 const pinned = getPinnedRoutes(this._extensionContext);
@@ -92,8 +93,7 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
                             vscode.TreeItemCollapsibleState.None,
                             route,
                             this._extensionContext,
-                            // isSameRoute(route, selected),
-                            false
+                            false,
                         );
 
                         item.command = {
@@ -118,8 +118,7 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
                     vscode.TreeItemCollapsibleState.None,
                     r,
                     this._extensionContext,
-                    // isSameRoute(r, selected),
-                    false
+                    false,
                 );
 
                 item.command = {

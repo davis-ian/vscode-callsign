@@ -4,12 +4,15 @@ import type { RouteRecordRaw } from 'vue-router';
 // import ApiExplorer from '@/views/ApiExplorer.vue';
 import RouteDetail from '@/views/RouteDetail.vue';
 import HistoryView from '@/views/HistoryView.vue';
+import HomeView from '@/views/HomeView.vue';
 
 const routes: RouteRecordRaw[] = [
-    // {
-    //     path: '/',
-    //     redirect: '/history',
-    // },
+    {
+        path: '/',
+        name: 'Home',
+        component: HomeView,
+        // redirect: '/history',
+    },
     {
         path: '/route',
         name: 'RouteDetail',

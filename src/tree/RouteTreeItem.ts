@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import type { OpenApiRoute } from '../types';
 import { isPinned } from '../core/pinnedRoutes';
+import { logInfo } from '../core/logger';
 
 export class RouteTreeItem extends vscode.TreeItem {
     public readonly route?: OpenApiRoute;
@@ -26,6 +27,8 @@ export class RouteTreeItem extends vscode.TreeItem {
 
         this.iconPath = method ? new vscode.ThemeIcon('circle-small-filled', color) : '';
         this.route = route;
+
+        logInfo(route, 'route');
 
         if (route && context) {
             this.contextValue =

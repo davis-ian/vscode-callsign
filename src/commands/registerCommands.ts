@@ -11,9 +11,10 @@ import { getWebviewContent } from '../utils/getWebviewContent';
 import { getConfiguredSpecUrls } from '../utils/settings';
 import { generateCode } from './codeGenCommand';
 import { updateStatusBar } from '../core/statusBar';
-import { togglePin } from '../core/pinnedRoutes';
+import { isPinned, togglePin } from '../core/pinnedRoutes';
 import { RouteTreeItem } from '../tree/RouteTreeItem';
 import { logInfo, showLogs } from '../core/logger';
+import { buildCurl } from '../utils/curlBuilder';
 
 let panel: vscode.WebviewPanel | undefined;
 
@@ -42,6 +43,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
         }),
 
         vscode.commands.registerCommand('callsign.openWebviewPanel', async (initialRoute?: string) => {
+            logInfo('opening web view', initialRoute);
             if (panel) {
                 panel.reveal(vscode.ViewColumn.One); // bring existing panel to front
 
@@ -74,14 +76,13 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 routeTreeProvider.refresh();
             });
 
-            // Delay navigateTo until Vue is mounted
-            if (initialRoute) {
-                const interval = setInterval(() => {
-                    if (!panel) return clearInterval(interval);
-                    panel.webview.postMessage({ command: 'navigateTo', path: initialRoute });
-                    clearInterval(interval);
-                }, 100); // can also use a ready message handshake if needed
-            }
+            // if (initialRoute) {
+            //     const interval = setInterval(() => {
+            //         if (!panel) return clearInterval(interval);
+            //         panel.webview.postMessage({ command: 'navigateTo', path: initialRoute });
+            //         clearInterval(interval);
+            //     }, 2000); // can also use a ready message handshake if needed
+            // }
         }),
 
         vscode.commands.registerCommand('callsign.showLogs', () => {
@@ -269,17 +270,33 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
 
         // Non command pallet commands
         vscode.commands.registerCommand('callsign.pinRoute', async (item: RouteTreeItem) => {
-            if (item.route) {
-                await togglePin(item.route, context);
-                routeTreeProvider.refresh(); // You'll add this
-            }
+            const route = item?.route || (await pickRouteQuickly(routeTreeProvider, 'Select a route to pin'));
+            if (!route) return;
+
+            await togglePin(route, context);
+            routeTreeProvider.refresh(); // You'll add this
         }),
 
         vscode.commands.registerCommand('callsign.unpinRoute', async (item: RouteTreeItem) => {
-            if (item.route) {
-                await togglePin(item.route, context);
-                routeTreeProvider.refresh();
-            }
+            const route =
+                item?.route ||
+                (await pickRouteQuickly(routeTreeProvider, 'Select a pinned route to unpin', context, r =>
+                    isPinned(r, context),
+                ));
+
+            if (!route) return;
+
+            await togglePin(route, context);
+            routeTreeProvider.refresh();
+        }),
+
+        vscode.commands.registerCommand('callsign.copyAsCurl', async (item: RouteTreeItem) => {
+            const route = item?.route || (await pickRouteQuickly(routeTreeProvider, 'Select a route to pin'));
+            if (!route) return;
+
+            const curl = buildCurl(route!);
+            await vscode.env.clipboard.writeText(curl);
+            vscode.window.showInformationMessage('cURL copied to clipboard');
         }),
 
         vscode.commands.registerCommand('callsign.loadRoutesFromSavedSpec', async () => {
@@ -316,21 +333,6 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
         vscode.commands.registerCommand('callsign.showRoutesView', () => {
             vscode.commands.executeCommand('workbench.views.explorer.callsign.routes');
         }),
-
-        // vscode.commands.registerCommand('callsign.openPanel', () => {
-        //     const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
-        //         enableScripts: true,
-        //         retainContextWhenHidden: true,
-        //     });
-
-        //     panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
-
-        //     panel.webview.onDidReceiveMessage(
-        //         message => handleMessage(message, panel, context),
-        //         undefined,
-        //         context.subscriptions,
-        //     );
-        // }),
 
         vscode.commands.registerCommand('callsign.showCommands', async () => {
             const selection = await vscode.window.showQuickPick(
@@ -386,4 +388,30 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             }
         }),
     );
+}
+
+export async function pickRouteQuickly(
+    provider: RouteTreeProvider,
+    placeholder = 'Select a route...',
+    context?: vscode.ExtensionContext,
+    filterFn?: (route: OpenApiRoute) => boolean,
+) {
+    let allRoutes = provider.getAllRoutes();
+    if (filterFn) {
+        allRoutes = allRoutes.filter(filterFn);
+    }
+
+    const items = allRoutes.map(route => ({
+        label: `${route.method.toUpperCase()} ${route.path}`,
+        description: route.details?.summary || '',
+        route,
+    }));
+
+    const picked = await vscode.window.showQuickPick(items, {
+        placeHolder: placeholder,
+        matchOnDescription: true,
+        matchOnDetail: true,
+    });
+
+    return picked?.route;
 }

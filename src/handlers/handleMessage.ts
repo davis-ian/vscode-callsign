@@ -4,7 +4,12 @@ import { AuthService } from '../services/AuthService';
 import * as vscode from 'vscode';
 import { OpenApiRoute, OpenApiSpec } from '../types';
 
-export async function handleMessage(message: any, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+export async function handleMessage(
+    message: any,
+    panel: vscode.WebviewPanel,
+    context: vscode.ExtensionContext,
+    initialVueRoute?: string,
+) {
     const authService = new AuthService(context);
     const { command, requestId, payload } = message;
 
@@ -119,6 +124,18 @@ export async function handleMessage(message: any, panel: vscode.WebviewPanel, co
                     selectedRoute: selectedRoute,
                     selectedAuthId: authIdDown,
                 };
+
+                panel.webview.postMessage({
+                    command: 'syncState',
+                    spec: cachedSpec,
+                });
+
+                if (initialVueRoute) {
+                    panel.webview.postMessage({
+                        command: 'navigateTo',
+                        path: initialVueRoute,
+                    });
+                }
 
                 break;
 
