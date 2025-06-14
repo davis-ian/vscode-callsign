@@ -113,6 +113,7 @@ export async function handleMessage(
                 break;
 
             case 'vueAppReady':
+                console.log('vue app ready heard!@', initialVueRoute);
                 const lastSelectedSpecUrl = context.workspaceState.get<string>('callsign.lastSelectedSpecUrl');
                 const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
                 const selectedRoute = context.workspaceState.get<OpenApiRoute | null>('callsign.selectedRoute');
@@ -123,19 +124,8 @@ export async function handleMessage(
                     openApiSpec: cachedSpec,
                     selectedRoute: selectedRoute,
                     selectedAuthId: authIdDown,
+                    initialVueRoute: initialVueRoute,
                 };
-
-                panel.webview.postMessage({
-                    command: 'syncState',
-                    spec: cachedSpec,
-                });
-
-                if (initialVueRoute) {
-                    panel.webview.postMessage({
-                        command: 'navigateTo',
-                        path: initialVueRoute,
-                    });
-                }
 
                 break;
 

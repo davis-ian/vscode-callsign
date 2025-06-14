@@ -65,7 +65,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
 
             panel.webview.onDidReceiveMessage(
-                message => handleMessage(message, panel!, context),
+                message => handleMessage(message, panel!, context, initialRoute),
                 undefined,
                 context.subscriptions,
             );
@@ -75,14 +75,6 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 context.workspaceState.update('callsign.selectedRoute', undefined);
                 routeTreeProvider.refresh();
             });
-
-            // if (initialRoute) {
-            //     const interval = setInterval(() => {
-            //         if (!panel) return clearInterval(interval);
-            //         panel.webview.postMessage({ command: 'navigateTo', path: initialRoute });
-            //         clearInterval(interval);
-            //     }, 2000); // can also use a ready message handshake if needed
-            // }
         }),
 
         vscode.commands.registerCommand('callsign.showLogs', () => {
