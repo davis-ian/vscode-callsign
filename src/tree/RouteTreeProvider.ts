@@ -69,3 +69,16 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
         return this._routes;
     }
 }
+
+// function extractRemainingPath(path: string, group: string): string {
+//     const parts = path.split('/').filter(Boolean); // ["api", "billing", "invoices", "edit"]
+
+//     const groupIndex = parts.findIndex(p => p.toLowerCase() === group.toLowerCase());
+
+//     if (groupIndex === -1 || groupIndex === parts.length - 1) {
+//         return '/'; // No remainder or nothing after group
+//     }
+
+//     const remaining = parts.slice(groupIndex + 1).join('/');
+//     return `/${remaining}`;
+// }

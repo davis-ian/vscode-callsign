@@ -156,7 +156,7 @@ const generatorType = ref<'openapi-typescript-codegen' | '@openapitools/openapi-
 );
 const loading = ref(false);
 
-import { CheckCircle, RefreshCw, FolderOpen, XCircle } from 'lucide-vue-next';
+import { CheckCircle, FolderOpen, XCircle } from 'lucide-vue-next';
 
 const result = ref<any>(null);
 const debugInfo = ref('');

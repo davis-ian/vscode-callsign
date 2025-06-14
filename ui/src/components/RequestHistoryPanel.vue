@@ -5,11 +5,10 @@
             <li
                 @click="toggleExpand(snap)"
                 class="cursor-pointer p-1 my-3 rounded border"
-                v-for="(snap, i) in requestHistory"
+                v-for="(snap, ) in requestHistory"
                 :key="snap.id"
             >
-                <!-- <span class="font-bold">{{ snap.method.toUpperCase() }}</span>
-                {{ snap.fullUrl || snap.path }} -->
+
 
                 <h2 class="font-semibold">
                     <span v-if="snap?.method" :class="getMethodColorClass(snap?.method)">{{

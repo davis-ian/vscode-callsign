@@ -32,8 +32,8 @@ export function getWebviewContent(
     html = html.replace(/"\.\/(.*?)"/g, (_match, p1) => `"${assetUri(p1)}"`);
 
     // Inject initial data and navigation handling script before closing body tag
-    const scriptsToInject = getInitialDataScript(lastSelectedSpecUrl) + getNavigationScript();
-    html = html.replace('</body>', `${scriptsToInject}</body>`);
+    // const scriptsToInject = getInitialDataScript(lastSelectedSpecUrl) + getNavigationScript();
+    // html = html.replace('</body>', `${scriptsToInject}</body>`);
 
     return html;
 }
@@ -49,59 +49,59 @@ function getDevServerHtml(lastSelectedSpecUrl: string | null) {
             </head>
             <body>
             <div id="app"></div>
-            ${getInitialDataScript(lastSelectedSpecUrl)}
-            ${getNavigationScript()}
             <script type="module" src="http://localhost:5173/src/main.ts"></script>
             </body>
             </html>
             `;
+    // ${getInitialDataScript(lastSelectedSpecUrl)}
+    // ${getNavigationScript()}
 }
 
-function getNavigationScript(): string {
-    return /* html */ `
-        <script>
-            // Store router instance globally so we can navigate from extension messages
-            window.vscodeRouter = null;
+// function getNavigationScript(): string {
+//     return /* html */ `
+//         <script>
+//             // Store router instance globally so we can navigate from extension messages
+//             window.vscodeRouter = null;
 
-            // Listen for messages from the extension
-            window.addEventListener('message', event => {
-                const message = event.data;
+//             // Listen for messages from the extension
+//             window.addEventListener('message', event => {
+//                 const message = event.data;
 
-                console.log('Webview received message:', message);
+//                 console.log('Webview received message:', message);
 
-                switch (message.command) {
-                    case 'navigateTo':
-                        console.log('Navigation message received:', message.url);
-                        // Navigate to specific route
-                        if (window.vscodeRouter) {
-                            console.log('Router available, navigating to:', message.url);
-                            window.vscodeRouter.push(message.url);
-                        } else {
-                            console.log('Router not ready, storing navigation for later:', message.url);
-                            // Store navigation command for later if router isn't ready yet
-                            window.pendingNavigation = message.url;
-                        }
-                        break;
-                    default:
-                        console.log('Unhandled message command:', message.command);
-                        break;
-                }
-            });
+//                 switch (message.command) {
+//                     case 'navigateTo':
+//                         console.log('Navigation message received:', message.url);
+//                         // Navigate to specific route
+//                         if (window.vscodeRouter) {
+//                             console.log('Router available, navigating to:', message.url);
+//                             window.vscodeRouter.push(message.url);
+//                         } else {
+//                             console.log('Router not ready, storing navigation for later:', message.url);
+//                             // Store navigation command for later if router isn't ready yet
+//                             window.pendingNavigation = message.url;
+//                         }
+//                         break;
+//                     default:
+//                         console.log('Unhandled message command:', message.command);
+//                         break;
+//                 }
+//             });
 
-            console.log('Navigation script loaded');
-        </script>
-    `;
-}
+//             console.log('Navigation script loaded');
+//         </script>
+//     `;
+// }
 
-function getInitialDataScript(lastSelectedSpecUrl: string | null): string {
-    return /* html */ `
-        <script>
-            // Inject initial data from VS Code extension
-            window.callsignInitialData = {
-                lastSelectedSpecUrl: ${JSON.stringify(lastSelectedSpecUrl)},
-                timestamp: new Date().toISOString()
-            };
-            console.log('Initial data injected:', window.callsignInitialData);
-        </script>
-    `;
-}
+// function getInitialDataScript(lastSelectedSpecUrl: string | null): string {
+//     return /* html */ `
+//         <script>
+//             // Inject initial data from VS Code extension
+//             window.callsignInitialData = {
+//                 lastSelectedSpecUrl: ${JSON.stringify(lastSelectedSpecUrl)},
+//                 timestamp: new Date().toISOString()
+//             };
+//             console.log('Initial data injected:', window.callsignInitialData);
+//         </script>
+//     `;
+// }

@@ -14,14 +14,6 @@
     "contributes": {
         "commands": [
             {
-                "command": "callsign.openPanel",
-                "title": "Callsign: Open"
-            },
-            {
-                "command": "callsign.openRoute",
-                "title": "Callsign: Open Route"
-            },
-            {
                 "command": "callsign.addSpecUrl",
                 "title": "Callsign: Add Spec Url"
             },
@@ -44,6 +36,10 @@
             {
                 "command": "callsign.openHistoryPage",
                 "title": "Callsign: Request History"
+            },
+            {
+                "command": "callsign.generateCode",
+                "title": "Callsign: Generate API Client"
             }
         ],
         "views": {
