@@ -33,6 +33,10 @@ onMounted(async () => {
       if (e.data.selectedRoute) {
         specStore.updateSelectedRoute(e.data.selectedRoute);
       }
+
+      if (e.data.spec) {
+        specStore.updateSpec(e.data.spec);
+      }
     }
   });
 });

@@ -24,6 +24,10 @@ export const useSpecStore = defineStore('spec', () => {
         selectedRoute.value = route;
     }
 
+    function updateSpec(spec: OpenApiSpec | null) {
+        currentSpec.value = spec;
+    }
+
     return {
         // State
         selectedRoute,
@@ -33,5 +37,6 @@ export const useSpecStore = defineStore('spec', () => {
         //Actions
         sync,
         updateSelectedRoute,
+        updateSpec,
     };
 });
