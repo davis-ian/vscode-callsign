@@ -39,7 +39,7 @@ async function initSendRequest(requestData: any) {
 
         // response.value = typeof result.body === 'object' ? JSON.stringify(result.body, null, 2) : result.body;
     } catch (err: any) {
-        logInfo(err, 'request error');
+        console.log(err, 'request error');
         response.value = err;
     }
 }

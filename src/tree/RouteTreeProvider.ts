@@ -74,6 +74,8 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
             return Promise.resolve(topLevelGroups);
         }
 
+        // const selected = this._extensionContext?.workspaceState.get<OpenApiRoute>('callsign.selectedRoute');
+
         // If expanding ⭐ Favorites
         if (element.label === 'Pinned') {
             if (this._extensionContext) {
@@ -90,6 +92,8 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
                             vscode.TreeItemCollapsibleState.None,
                             route,
                             this._extensionContext,
+                            // isSameRoute(route, selected),
+                            false
                         );
 
                         item.command = {
@@ -114,6 +118,8 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
                     vscode.TreeItemCollapsibleState.None,
                     r,
                     this._extensionContext,
+                    // isSameRoute(r, selected),
+                    false
                 );
 
                 item.command = {
@@ -146,3 +152,5 @@ function extractRemainingPath(path: string, group: string): string {
     const remaining = parts.slice(groupIndex + 1).join('/');
     return `../${remaining}`;
 }
+
+const isSameRoute = (r1: OpenApiRoute, r2?: OpenApiRoute) => r1.path === r2?.path && r1.method === r2?.method;

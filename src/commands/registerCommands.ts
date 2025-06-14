@@ -15,6 +15,8 @@ import { togglePin } from '../core/pinnedRoutes';
 import { RouteTreeItem } from '../tree/RouteTreeItem';
 import { logInfo, showLogs } from '../core/logger';
 
+let panel: vscode.WebviewPanel | undefined;
+
 export function registerCommands(context: vscode.ExtensionContext, routeTreeProvider: RouteTreeProvider) {
     context.subscriptions.push(
         vscode.commands.registerCommand('callsign.refreshRoutes', () => {
@@ -22,33 +24,38 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             if (rawSpec) routeTreeProvider.setRoutes(rawSpec, context);
         }),
 
-        vscode.commands.registerCommand('callsign.openRoute', async (route: OpenApiRoute) => {
-            vscode.window.showInformationMessage(`Route: ${route.method.toUpperCase()} ${route.path}`);
-
-            await context.workspaceState.update('callsign.selectedRoute', route);
-
-            const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
-                enableScripts: true,
-                retainContextWhenHidden: true,
-            });
-
-            panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
-
-            // openRouteInWebview(context, route, panel);
-
-            panel.webview.onDidReceiveMessage(
-                message => handleMessage(message, panel, context),
-                undefined,
-                context.subscriptions,
-            );
-        }),
-
         vscode.commands.registerCommand('callsign.openHistoryPage', () => {
             vscode.commands.executeCommand('callsign.openWebviewPanel', '/history');
         }),
 
+        vscode.commands.registerCommand('callsign.openRoute', async (route: OpenApiRoute) => {
+            console.log('open route command', route);
+            await context.workspaceState.update('callsign.selectedRoute', route);
+            routeTreeProvider.refresh();
+
+            panel?.webview.postMessage({
+                command: 'syncState',
+                selectedRoute: route,
+            });
+
+            vscode.commands.executeCommand('callsign.openWebviewPanel', '/route');
+        }),
+
         vscode.commands.registerCommand('callsign.openWebviewPanel', async (initialRoute?: string) => {
-            const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
+            if (panel) {
+                panel.reveal(vscode.ViewColumn.One); // bring existing panel to front
+
+                if (initialRoute) {
+                    panel.webview.postMessage({
+                        command: 'navigateTo',
+                        path: initialRoute,
+                    });
+                }
+
+                return;
+            }
+
+            panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
                 enableScripts: true,
                 retainContextWhenHidden: true,
             });
@@ -56,20 +63,27 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
 
             panel.webview.onDidReceiveMessage(
-                message => handleMessage(message, panel, context),
+                message => handleMessage(message, panel!, context),
                 undefined,
                 context.subscriptions,
             );
 
+            panel.onDidDispose(() => {
+                panel = undefined;
+                context.workspaceState.update('callsign.selectedRoute', undefined);
+                routeTreeProvider.refresh();
+            });
+
+            // Delay navigateTo until Vue is mounted
             if (initialRoute) {
-                panel.webview.onDidReceiveMessage(() => {
-                    panel.webview.postMessage({
-                        command: 'navigateTo',
-                        path: initialRoute,
-                    });
-                });
+                const interval = setInterval(() => {
+                    if (!panel) return clearInterval(interval);
+                    panel.webview.postMessage({ command: 'navigateTo', path: initialRoute });
+                    clearInterval(interval);
+                }, 100); // can also use a ready message handshake if needed
             }
         }),
+
         vscode.commands.registerCommand('callsign.showLogs', () => {
             showLogs();
         }),
@@ -299,20 +313,20 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             vscode.commands.executeCommand('workbench.views.explorer.callsign.routes');
         }),
 
-        vscode.commands.registerCommand('callsign.openPanel', () => {
-            const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
-                enableScripts: true,
-                retainContextWhenHidden: true,
-            });
+        // vscode.commands.registerCommand('callsign.openPanel', () => {
+        //     const panel = vscode.window.createWebviewPanel('callsignDocs', 'Callsign', vscode.ViewColumn.One, {
+        //         enableScripts: true,
+        //         retainContextWhenHidden: true,
+        //     });
 
-            panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
+        //     panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, context);
 
-            panel.webview.onDidReceiveMessage(
-                message => handleMessage(message, panel, context),
-                undefined,
-                context.subscriptions,
-            );
-        }),
+        //     panel.webview.onDidReceiveMessage(
+        //         message => handleMessage(message, panel, context),
+        //         undefined,
+        //         context.subscriptions,
+        //     );
+        // }),
 
         vscode.commands.registerCommand('callsign.showCommands', async () => {
             const selection = await vscode.window.showQuickPick(

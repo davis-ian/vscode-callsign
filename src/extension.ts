@@ -12,6 +12,7 @@ import { initStatusBar, updateStatusBar } from './core/statusBar';
 import { initLogger, logInfo } from './core/logger';
 
 let currentSpec: OpenApiSpec | undefined;
+let routeTreeProvider: RouteTreeProvider;
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -31,7 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
     //     updateStatusBar('idle', rawSpec.paths.length, 0);
     // }
 
-    const routeTreeProvider = new RouteTreeProvider(rawSpec, context);
+    routeTreeProvider = new RouteTreeProvider(rawSpec, context);
 
     vscode.window.registerTreeDataProvider('callsign.routes', routeTreeProvider);
 
@@ -39,7 +40,10 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate(context: vscode.ExtensionContext) {
+    context.workspaceState.update('callsign.selectedRoute', undefined);
+    routeTreeProvider.refresh();
+}
 
 async function loadDefaultJson(context: vscode.ExtensionContext): Promise<OpenApiSpec | undefined> {
     // const defaultSpecDataUrl = 'https://petstore3.swagger.io/api/v3/openapi.json';

@@ -20,6 +20,10 @@ export const useSpecStore = defineStore('spec', () => {
         selectedAuthId.value = authId;
     }
 
+    function updateSelectedRoute(route: OpenApiRoute | null) {
+        selectedRoute.value = route;
+    }
+
     return {
         // State
         selectedRoute,
@@ -28,5 +32,6 @@ export const useSpecStore = defineStore('spec', () => {
 
         //Actions
         sync,
+        updateSelectedRoute,
     };
 });
