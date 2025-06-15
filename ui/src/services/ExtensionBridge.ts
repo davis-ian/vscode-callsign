@@ -102,11 +102,11 @@ class ExtensionBridge {
 
     async makeAuthenticatedRequest(
         endpoint: ApiEndpoint,
-        authId?: string,
+        headers: Record<string, string>,
         body?: any,
         params?: Record<string, string>,
     ): Promise<ApiResponse> {
-        return this.callExtension<ApiResponse>('makeRequest', { endpoint, authId, body, params });
+        return this.callExtension<ApiResponse>('makeRequest', { endpoint, headers, body, params });
     }
 
     postMessage(message: any): void {

@@ -56,8 +56,7 @@ export async function handleMessage(
             case 'getCredentialById':
                 const id = payload?.id || message.id;
                 data = await authService.getCredential(id);
-                logInfo(id, 'ID: getting credential by id @ handler');
-                logInfo(data, 'DATA: getting credential by id @ handler');
+
                 break;
 
             case 'getAuthHeader':
@@ -164,8 +163,6 @@ export async function handleMessage(
                     const curl = buildCurl(route, inputData, resolvedBaseUrl);
 
                     data = { curl };
-
-                    logInfo(curl, 'build curl handled');
                 }
                 break;
 

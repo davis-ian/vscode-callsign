@@ -2,19 +2,7 @@ import { logInfo } from '../core/logger';
 import { AuthService } from '../services/AuthService';
 
 export async function makeAuthenticatedRequest(payload: any, authService: AuthService) {
-    const { endpoint, authId, body, params } = payload;
-
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-    };
-
-    if (authId) {
-        const credential = await authService.getCredential(authId);
-        if (credential) {
-            const authHeaders = authService.formatForHeader(credential);
-            Object.assign(headers, authHeaders);
-        }
-    }
+    const { endpoint, headers = {}, body, params } = payload;
 
     let url = endpoint.url;
     if (params && Object.keys(params).length > 0) {

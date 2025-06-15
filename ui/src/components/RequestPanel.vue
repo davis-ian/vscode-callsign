@@ -1,9 +1,5 @@
 <template>
     <div class="flex flex-col h-full" v-if="route">
-        <div>
-            <p class="uppercase text-center">Request</p>
-        </div>
-
         <div class="p-4 flex-shrink-0">
             <h2 class="font-semibold">
                 <span v-if="route?.method" :class="getMethodColorClass(route?.method)">{{
@@ -11,9 +7,9 @@
                 }}</span>
                 {{ route?.path }}
             </h2>
-            <p class="text-sm text-vs-efg opacity-50" v-if="route?.details?.description">
+            <!-- <p class="text-sm text-vs-efg opacity-50" v-if="route?.details?.description">
                 {{ route.details.description }}
-            </p>
+            </p> -->
         </div>
 
         <div class="flex-1 flex flex-col min-h-0">
@@ -66,7 +62,6 @@ import RequestPreviewTab from './Tabs/RequestPreviewTab.vue';
 import type { OpenApiRoute } from '@/types';
 import { getMethodColorClass } from '@/utilities/dynamicColors';
 import { useSpecStore } from '@/stores/spec';
-import { vsLog } from '@/utilities/extensionLogger';
 import { extensionBridge } from '@/services/ExtensionBridge';
 
 const specStore = useSpecStore();
@@ -95,21 +90,16 @@ const hasParams = computed(() => (props.route?.details?.parameters?.length ?? 0)
 const hasBody = computed(() => !!props.route?.details?.requestBody);
 
 function handleSend() {
-    vsLog(requestData.value, 'request data');
     emit('send-request', requestData.value);
 }
 
 onMounted(async () => {
     if (specStore.selectedAuthId) {
-        // requestData.value.authId = specStore.selectedAuthId;
-
-        vsLog(specStore.selectedAuthId, 'selectedAuthId @ request panel mount');
         const auth = await extensionBridge.getCredentialById(specStore.selectedAuthId);
         if (auth) {
             requestData.value.authHeader.value = auth.value;
             requestData.value.authHeader.key = auth.credential.key;
         }
-        vsLog(auth, 'credential @ panel mount');
     }
 });
 

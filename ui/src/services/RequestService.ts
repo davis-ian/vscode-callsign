@@ -8,7 +8,7 @@ const { addSnapshot } = useRequestHistory();
 export async function sendRequest(
     route: OpenApiRoute,
     paramInputs: Record<string, string>,
-    authId?: string,
+    authHeader?: { key: string; value: string },
     bodyInput?: string,
 ): Promise<ApiResponse> {
     const hasBody = route.details?.requestBody?.content?.['application/json'];
@@ -56,14 +56,13 @@ export async function sendRequest(
         'Content-Type': 'application/json',
     };
 
-    if (authId) {
-        const authHeaders = await extensionBridge.getAuthHeader(authId);
-        Object.assign(headers, authHeaders);
+    if (authHeader && authHeader.key && authHeader.value) {
+        headers[authHeader.key] = authHeader.value;
     }
 
     const curl = buildCurlCommand(route.method, endpoint.url, headers, body);
 
-    const result = await extensionBridge.makeAuthenticatedRequest(endpoint, authId || undefined, body, rawParams);
+    const result = await extensionBridge.makeAuthenticatedRequest(endpoint, headers, body, rawParams);
 
     addSnapshot({
         id: crypto.randomUUID?.() || Date.now().toString(),

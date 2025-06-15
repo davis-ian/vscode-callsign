@@ -33,13 +33,9 @@ defineEmits(['update:activeTab']);
 const availableTabs = computed(() => {
     const tabs = [];
 
-    if (props.showBody) {
-        tabs.push({ id: 'body', label: 'Body' });
-    }
+    tabs.push({ id: 'body', label: 'Body' });
 
-    if (props.showHeaders) {
-        tabs.push({ id: 'headers', label: 'Headers' });
-    }
+    tabs.push({ id: 'headers', label: 'Headers' });
 
     if (props.showMeta) {
         tabs.push({ id: 'meta', label: 'Meta' });

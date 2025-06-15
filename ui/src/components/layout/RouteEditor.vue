@@ -35,7 +35,7 @@ async function initSendRequest(requestData: any) {
         response.value = await sendRequest(
             specStore.selectedRoute,
             requestData.params,
-            requestData.authId,
+            requestData.authHeader,
             requestData.body,
         );
 

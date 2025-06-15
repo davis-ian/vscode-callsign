@@ -13,8 +13,7 @@
 import Btn from '../Common/Btn.vue';
 import type { OpenApiRoute } from '@/types';
 import { extensionBridge } from '@/services/ExtensionBridge';
-import { ref } from 'vue';
-import { vsLog } from '@/utilities/extensionLogger';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
     route: OpenApiRoute;
@@ -26,7 +25,6 @@ const props = defineProps<{
 const curlCommand = ref('');
 
 async function triggerCurlBuilder() {
-    vsLog(props, 'params sent to curl builder');
     const routeClone = JSON.parse(JSON.stringify(props.route));
     const sanitizedInputData = JSON.parse(
         JSON.stringify({
@@ -38,10 +36,12 @@ async function triggerCurlBuilder() {
 
     const resp = await extensionBridge.buildCurl(routeClone, sanitizedInputData);
 
-    vsLog(resp?.curl, 'curl builder resp');
-
     if (resp?.curl) {
         curlCommand.value = resp.curl;
     }
 }
+
+onMounted(() => {
+    triggerCurlBuilder();
+});
 </script>
