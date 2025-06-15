@@ -1,8 +1,9 @@
 <template>
-    <div class="flex justify-between">
-        <Btn v-if="selectedRoute" @click="selectedRoute = null">Back</Btn>
-        <Btn @click="showAuthModal = true">Auth</Btn>
-
+    <div>
+        <div class="flex justify-end p-2">
+            <Btn v-if="selectedRoute" @click="selectedRoute = null">Back</Btn>
+            <Btn @click="showAuthModal = true">Auth</Btn>
+        </div>
         <AuthModal v-model="showAuthModal" />
     </div>
 </template>

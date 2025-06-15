@@ -8,12 +8,11 @@
                 class="px-4 py-2 text-sm font-medium border-b-2 transition-colors"
                 :class="[
                     activeTab === tab.id
-                        ? 'border-vs-bbg text-vs-bbg '
+                        ? 'border-vs-bbg text-vs-bbg'
                         : 'border-transparent text-vs-efg opacity-50 hover:opacity-85',
                 ]"
             >
                 {{ tab.label }}
-                <!-- <span v-if="tab.count" class="ml-1 text-xs opacity-60"> ({{ tab.count }}) </span> -->
             </button>
         </nav>
     </div>
@@ -24,9 +23,9 @@ import { computed } from 'vue';
 
 const props = defineProps<{
     activeTab: string;
-    hasParams?: boolean;
-    hasBody?: boolean;
-    showAuth?: boolean;
+    showBody?: boolean;
+    showHeaders?: boolean;
+    showMeta?: boolean;
 }>();
 
 defineEmits(['update:activeTab']);
@@ -34,19 +33,17 @@ defineEmits(['update:activeTab']);
 const availableTabs = computed(() => {
     const tabs = [];
 
-    if (props.hasParams) {
-        tabs.push({ id: 'params', label: 'Params' });
-    }
-
-    if (props.hasBody) {
+    if (props.showBody) {
         tabs.push({ id: 'body', label: 'Body' });
     }
 
-    // tabs.push({ id: 'headers', label: 'Headers' });
+    if (props.showHeaders) {
+        tabs.push({ id: 'headers', label: 'Headers' });
+    }
 
-    // if (props.showAuth) {
-    tabs.push({ id: 'authId', label: 'Auth' });
-    // }
+    if (props.showMeta) {
+        tabs.push({ id: 'meta', label: 'Meta' });
+    }
 
     return tabs;
 });

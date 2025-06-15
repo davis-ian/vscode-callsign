@@ -1,11 +1,12 @@
 <template>
-    <div class="flex-grow flex">
+    <div class="flex-grow flex border-0">
         <RequestPanel
             @send-request="data => initSendRequest(data)"
             :route="specStore.selectedRoute"
             :loading="loading"
             class="w-1/2"
         />
+        <div class="border-r border-vs-tfg"></div>
         <ResponsePanel :response="response" :loading="loading" class="w-1/2" />
     </div>
 </template>

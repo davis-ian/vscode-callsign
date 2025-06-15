@@ -3,10 +3,10 @@
         <div class="my-2 flex" v-for="param in route?.details?.parameters">
             <div class="mr-4">
                 <p class="text-xs">
-                    <span class="bg-gray-800 text-gray-200 rounded px-1 py-0.5 text-[10px] uppercase tracking-wider">
+                    <span class="bg-vs-bbg text-vs-bfg rounded px-1 py-0.5 text-[10px] uppercase tracking-wider">
                         {{ param?.schema?.type }}
                     </span>
-                    <span v-if="param?.schema?.format">({{ param.schema.format }})</span>
+                    <span class="ml-2" v-if="param?.schema?.format">({{ param.schema.format }})</span>
                 </p>
                 <p><span v-if="param.required" class="text-red-500">*</span>{{ param.name }}</p>
             </div>

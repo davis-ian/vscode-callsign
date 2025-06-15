@@ -1,9 +1,13 @@
 <template>
     <button
-        class="btn cursor-pointer"
+        class="btn cursor-pointer rounded"
         :class="[
             variantClass,
-            { 'opacity-50 cursor-not-allowed': disabled, 'w-full block': props.block, 'rounded-none': props.square },
+            {
+                'opacity-50 cursor-not-allowed': disabled,
+                'w-full block': props.block,
+                'rounded-none': props.square,
+            },
         ]"
         :disabled="disabled"
         @click="handleClick"
@@ -54,7 +58,7 @@ const variantClass = computed(() => {
 <style scoped>
 .btn {
     padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
+    /* border-radius: 0.375rem; */
     transition: all 0.2s ease;
 }
 

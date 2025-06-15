@@ -1,5 +1,5 @@
 <template>
-    <div class="app-layout-container p-1">
+    <div class="app-layout-container">
         <RouterView class="router-view" />
     </div>
 </template>
@@ -20,6 +20,7 @@ provideSelectedRoute(selectedRoute);
     display: flex;
     flex-direction: row;
     min-height: 100%;
+    /* border: 2px solid lime; */
 }
 
 .router-view {

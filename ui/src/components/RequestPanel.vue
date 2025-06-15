@@ -11,7 +11,7 @@
                 }}</span>
                 {{ route?.path }}
             </h2>
-            <p class="text-sm text-gray-400" v-if="route?.details?.description">
+            <p class="text-sm text-vs-efg opacity-50" v-if="route?.details?.description">
                 {{ route.details.description }}
             </p>
         </div>

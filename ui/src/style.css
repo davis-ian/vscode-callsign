@@ -16,11 +16,19 @@
 
 code {
     background-color: transparent;
+    color: var(--vscode-editor-foreground);
+
+    font-family: var(--vscode-editor-font-family);
 }
 
 body {
     /* border: 2px solid red; */
     height: 100svh;
-    width: 100svw;
+    width: 100vw;
     overflow: hidden;
+    font-family: var(--vscode-font-family);
+}
+
+.mono {
+    font-family: var(--vscode-editor-font-family);
 }
