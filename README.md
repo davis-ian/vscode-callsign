@@ -23,10 +23,13 @@ Whether you're building an API or consuming one, Callsign helps you **explore**,
 -   🧪 **API Request Panel**
     Preview and send real requests with headers, path and query params.
 
+-   👀 **cURL Preview**
+    Instantly preview a fully-formed `curl` command based on the request panel inputs.
+
 -   🛠️ **Code Generation**
     Generate TypeScript clients using `openapi-typescript-codegen` directly from a saved spec.
 
--   🧪 **Mock Server Support (planned)**
+-   🧑‍🍳 **Mock Server Support (planned)**
     Preview and simulate endpoints without needing the backend live.
 
 ---
@@ -101,7 +104,7 @@ Built by [Ian Davis](https://iandavis.dev) – a toolmaker for developers who wa
 
 ## 🙌 Feedback & Contributions
 
-💡 Have a feature request or bug? [Submit an issue](https://github.com/your-org/callsign/issues)
+💡 Have a feature request or bug? [Submit an issue](https://github.com/davis-ian/callsign/issues)
 ✨ Want to contribute? PRs are welcome!
 ⭐ Love the extension? Star it on GitHub and share it with your team.
 
