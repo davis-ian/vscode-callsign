@@ -84,12 +84,15 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
         }),
 
         vscode.commands.registerCommand('callsign.quickSearchRoutes', async () => {
-            const allRoutes = routeTreeProvider.getAllRoutes(); // You'll expose this getter
-            const items = allRoutes.map(route => ({
-                label: `${route.method.toUpperCase()} ${route.path}`,
-                description: route.details?.summary || '',
-                route,
-            }));
+            const allRoutes = routeTreeProvider.getAllRoutes();
+            const items: vscode.QuickPickItem[] = [
+                { label: '$(arrow-left) Back', description: '', alwaysShow: true },
+                ...allRoutes.map(route => ({
+                    label: `${route.method.toUpperCase()} ${route.path}`,
+                    description: route.details?.summary || '',
+                    route,
+                })),
+            ];
 
             const picked = await vscode.window.showQuickPick(items, {
                 placeHolder: 'Search API route...',
@@ -97,7 +100,14 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 matchOnDetail: true,
             });
 
-            if (picked) {
+            if (!picked) return;
+
+            if (picked.label === '$(arrow-left) Back') {
+                vscode.commands.executeCommand('callsign.showCommands');
+                return;
+            }
+
+            if ('route' in picked) {
                 vscode.commands.executeCommand('callsign.openRoute', picked.route);
             }
         }),
@@ -113,9 +123,24 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                     return;
                 }
 
-                const jsonUrl = await vscode.window.showQuickPick(savedSpecs, {
-                    placeHolder: 'Select a saved OpenAPI spec URL',
-                });
+                const jsonUrlPick = await vscode.window.showQuickPick(
+                    [
+                        { label: '$(arrow-left) Back', description: '', alwaysShow: true },
+                        ...savedSpecs.map(url => ({ label: url })),
+                    ],
+                    {
+                        placeHolder: 'Select a saved OpenAPI spec URL',
+                    },
+                );
+
+                if (!jsonUrlPick) return;
+
+                if (jsonUrlPick.label === '$(arrow-left) Back') {
+                    vscode.commands.executeCommand('callsign.showCommands');
+                    return;
+                }
+
+                const jsonUrl = jsonUrlPick.label;
                 if (!jsonUrl) return;
 
                 // Step 1: Show recent or common folders
@@ -126,20 +151,26 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                 const lastUsed = context.workspaceState.get<string>(lastOutputKey);
 
                 const folderOptions = [
-                    ...(lastUsed ? [lastUsed] : []),
-                    ...commonOptions,
-                    'Other (Enter custom path...)',
+                    { label: '$(arrow-left) Back', description: '', alwaysShow: true },
+                    ...(lastUsed ? [{ label: lastUsed }] : []),
+                    ...commonOptions.map(folder => ({ label: folder })),
+                    { label: 'Other (Enter custom path...)' },
                 ];
 
-                const picked = await vscode.window.showQuickPick(folderOptions, {
+                const pickedFolder = await vscode.window.showQuickPick(folderOptions, {
                     placeHolder: 'Select or enter an output folder',
                 });
 
+                if (!pickedFolder) return;
+
+                if (pickedFolder.label === '$(arrow-left) Back') {
+                    vscode.commands.executeCommand('callsign.generateCode');
+                    return;
+                }
+
                 let outputPath: string | undefined;
 
-                if (!picked) return;
-
-                if (picked === 'Other (Enter custom path...)') {
+                if (pickedFolder.label === 'Other (Enter custom path...)') {
                     outputPath = await vscode.window.showInputBox({
                         prompt: 'Enter output folder path',
                         value: path.join(workspaceFolder!, 'src', 'generated-api'),
@@ -149,7 +180,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
 
                     if (!outputPath) return;
                 } else {
-                    outputPath = picked;
+                    outputPath = pickedFolder.label;
                 }
 
                 // Ensure folder exists
@@ -228,6 +259,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
 
         vscode.commands.registerCommand('callsign.deleteSpecUrlFromSettings', async () => {
             const configuredUrls = getConfiguredSpecUrls();
+            logInfo(configuredUrls, 'fonigured urls');
 
             if (configuredUrls.length === 0) {
                 vscode.window.showInformationMessage('No configured spec URLs found.');
@@ -236,8 +268,8 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
 
             const picked = await vscode.window.showQuickPick(
                 configuredUrls.map(spec => ({
-                    label: spec.name,
-                    description: spec.url,
+                    label: spec,
+                    // description: spec.url,
                     spec,
                 })),
                 { placeHolder: 'Select a spec URL to delete' },
@@ -245,13 +277,11 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
 
             if (!picked) return;
 
-            const updated = configuredUrls.filter(u => u.url !== picked.spec.url);
+            const updated = configuredUrls.filter(u => u !== picked.spec);
 
-            await vscode.workspace
-                .getConfiguration('callsign')
-                .update('specUrls', updated, vscode.ConfigurationTarget.Global);
+            await vscode.workspace.getConfiguration('callsign').update('specUrls', updated);
 
-            vscode.window.showInformationMessage(`Deleted ${picked.spec.name} from Callsign spec URLs.`);
+            vscode.window.showInformationMessage(`Deleted ${picked.spec} from Callsign spec URLs.`);
         }),
 
         vscode.commands.registerCommand('callsign.openSettings', () => {
@@ -264,7 +294,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             if (!route) return;
 
             await togglePin(route, context);
-            routeTreeProvider.refresh(); // You'll add this
+            routeTreeProvider.refresh();
         }),
 
         vscode.commands.registerCommand('callsign.unpinRoute', async (item: RouteTreeItem) => {
@@ -341,46 +371,75 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             vscode.commands.executeCommand('workbench.views.explorer.callsign.routes');
         }),
 
+        vscode.commands.registerCommand('callsign.manageSpecs', async () => {
+            const selection = await vscode.window.showQuickPick([
+                {
+                    label: '$(arrow-left)  Back',
+                    command: 'callsign.showCommands',
+                },
+                {
+                    label: '$(file-code)  Load OpenAPI Spec',
+                    description: 'Load or refresh your OpenAPI spec',
+                    command: 'callsign.loadRoutesFromSavedSpec',
+                },
+                {
+                    label: '$(add)  Add New Spec URL',
+                    description: 'Save a new OpenAPI spec URL',
+                    command: 'callsign.addSpecUrl',
+                },
+                {
+                    label: '$(trash)  Delete Spec URL',
+                    description: 'Remove a saved OpenAPI spec URL',
+                    command: 'callsign.deleteSpecUrlFromSettings',
+                },
+            ]);
+
+            if (selection?.command) {
+                vscode.commands.executeCommand(selection.command);
+            }
+        }),
+
         vscode.commands.registerCommand('callsign.showCommands', async () => {
             const selection = await vscode.window.showQuickPick(
                 [
                     {
-                        label: '$(file-code) Load OpenAPI Spec',
-                        description: 'Load or refresh your OpenAPI spec',
-                        command: 'callsign.loadRoutesFromSavedSpec',
-                    },
-                    {
-                        label: '$(search) Search Routes',
+                        label: '$(search)  Search Routes',
                         description: 'Search routes in your OpenAPI spec',
                         command: 'callsign.quickSearchRoutes',
                     },
                     {
-                        label: '$(rocket) Generate API Client Code',
+                        label: '$(rocket)  Generate API Client Code',
                         description: 'Run code generation for current spec',
                         command: 'callsign.generateCode',
                     },
                     {
-                        label: '$(clock) View Request History',
+                        label: '$(clock)  View Request History',
                         description: 'View previous requests you’ve made',
                         command: 'callsign.openHistoryPage',
                     },
                     {
-                        label: '$(cloud-upload) Add Spec URL',
+                        label: '$(copy)  Copy as cURL',
+                        description: 'Copy cURL command for route to clipboard',
+                        command: 'callsign.copyAsCurl',
+                    },
+                    {
+                        label: '$(key)  Manage Auth',
+                        description: 'Manages stored  auth headers',
+                        command: 'callsign.listStoredAuth',
+                    },
+                    {
+                        label: '$(file-code)  Manage Specs',
                         description: 'Save new OpenAPI spec URL',
-                        command: 'callsign.addSpecUrl',
+                        command: 'callsign.manageSpecs',
                     },
+
                     {
-                        label: '$(trash) Remove Spec URL',
-                        description: 'Delete saved OpenAPI spec URL',
-                        command: 'callsign.deleteSpecUrlFromSettings',
-                    },
-                    {
-                        label: '$(gear) Settings',
+                        label: '$(gear)  Settings',
                         description: 'Open Callsign extension settings',
                         command: 'callsign.openSettings',
                     },
                     {
-                        label: '$(output) Show Logs',
+                        label: '$(output)  Show Logs',
                         description: 'Open Callsign output channel logs',
                         command: 'callsign.showLogs',
                     },
@@ -403,24 +462,30 @@ export async function pickRouteQuickly(
     context?: vscode.ExtensionContext,
     filterFn?: (route: OpenApiRoute) => boolean,
 ) {
-    let allRoutes = provider.getAllRoutes();
-    if (filterFn) {
-        allRoutes = allRoutes.filter(filterFn);
-    }
-
-    const items = allRoutes.map(route => ({
-        label: `${route.method.toUpperCase()} ${route.path}`,
-        description: route.details?.summary || '',
-        route,
-    }));
+    const allRoutes = provider.getAllRoutes();
+    const items: vscode.QuickPickItem[] = [
+        { label: '$(arrow-left) Back', description: '', alwaysShow: true },
+        ...allRoutes.map(route => ({
+            label: `${route.method.toUpperCase()} ${route.path}`,
+            description: route.details?.summary || '',
+            route,
+        })),
+    ];
 
     const picked = await vscode.window.showQuickPick(items, {
-        placeHolder: placeholder,
+        placeHolder: 'Search API route...',
         matchOnDescription: true,
         matchOnDetail: true,
     });
 
-    return picked?.route;
+    if (!picked) return;
+
+    if (picked.label === '$(arrow-left) Back') {
+        vscode.commands.executeCommand('callsign.showCommands');
+        return;
+    }
+
+    return picked;
 }
 
 async function showAuthQuickPick(authService: AuthService, context: vscode.ExtensionContext) {
@@ -434,9 +499,11 @@ async function showAuthQuickPick(authService: AuthService, context: vscode.Exten
     }));
 
     items.push(
+        { label: '$(arrow-left)  Back', description: '', alwaysShow: true },
         { label: '$(add)  Add New Auth Header', description: '', alwaysShow: true },
         { label: '$(edit)  Edit Existing', description: 'Select a header to edit', alwaysShow: true },
         { label: '$(trash)  Delete Existing', description: 'Select a header to remove', alwaysShow: true },
+        { label: '$(flame)  Delete All', description: 'Remove all headers', alwaysShow: true },
     );
 
     const selection = await vscode.window.showQuickPick(items, {
@@ -448,9 +515,14 @@ async function showAuthQuickPick(authService: AuthService, context: vscode.Exten
 
     // Handle action choices
     switch (selection.label) {
+        case '$(arrow-left)  Back': {
+            vscode.commands.executeCommand('callsign.showCommands');
+            break;
+        }
+
         case '$(add)  Add New Auth Header': {
             const key = await vscode.window.showInputBox({ prompt: 'Enter header key' });
-            const value = await vscode.window.showInputBox({ prompt: 'Enter header value (visible)', password: false });
+            const value = await vscode.window.showInputBox({ prompt: 'Enter header value', password: false });
 
             if (key && value) {
                 await authService.storeCredential({ name: key, key }, value);
@@ -500,6 +572,11 @@ async function showAuthQuickPick(authService: AuthService, context: vscode.Exten
                 await authService.deleteCredential(match.id);
                 vscode.window.showWarningMessage(`Deleted ${match.key}`);
             }
+            break;
+        }
+
+        case '$(flame)  Delete All': {
+            await authService.clearAllCredentials();
             break;
         }
 

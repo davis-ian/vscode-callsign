@@ -77,6 +77,16 @@
                 "command": "callsign.clearStoredAuth",
                 "title": "Clear All Auth Headers",
                 "category": "Callsign"
+            },
+            {
+                "command": "callsign.showCommands",
+                "title": "Show Commands",
+                "category": "Callsign"
+            },
+            {
+                "command": "callsign.manageSpecs",
+                "title": "Manage Specs",
+                "category": "Callsign"
             }
         ],
         "views": {
@@ -87,6 +97,13 @@
                 }
             ]
         },
+        "keybindings": [
+            {
+                "command": "callsign.showCommands",
+                "key": "ctrl+shift+c",
+                "mac": "ctrl+shift+c"
+            }
+        ],
         "menus": {
             "view/item/context": [
                 {
