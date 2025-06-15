@@ -506,7 +506,13 @@ async function showAuthQuickPick(authService: AuthService, context: vscode.Exten
         default: {
             const match = creds.find(c => c.key === selection.label);
             if (match) {
-                authService.setActiveCredential(match.id);
+                const success = await authService.setActiveCredential(match.id);
+                if (success && panel) {
+                    panel?.webview.postMessage({
+                        command: 'syncState',
+                        selectedAuthId: match.id,
+                    });
+                }
             }
         }
     }

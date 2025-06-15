@@ -34,7 +34,7 @@ export interface AuthHeader {
 export interface AuthMethod {
     id: string;
     name: string;
-    type: string;
+    key: string;
     displayName: string;
 }
 

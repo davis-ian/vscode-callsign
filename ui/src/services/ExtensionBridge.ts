@@ -95,8 +95,8 @@ class ExtensionBridge {
         return credentials.map(cred => ({
             id: cred.id,
             name: cred.name,
-            type: cred.type,
-            displayName: `${cred.name} (${cred.type.toUpperCase()})`,
+            key: cred.key,
+            displayName: `${cred.name} (${cred.key.toUpperCase()})`,
         }));
     }
 

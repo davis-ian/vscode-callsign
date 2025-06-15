@@ -37,6 +37,10 @@ onMounted(async () => {
             if (e.data.spec) {
                 specStore.updateSpec(e.data.spec);
             }
+            if (e.data.selectedAuthId) {
+                specStore.updateSelectedAuthId(e.data.selectedAuthId);
+                vsLog('auth id sync heard', e.data.selectedAuthId);
+            }
         }
     });
 

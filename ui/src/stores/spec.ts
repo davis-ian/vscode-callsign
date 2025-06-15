@@ -28,6 +28,10 @@ export const useSpecStore = defineStore('spec', () => {
         currentSpec.value = spec;
     }
 
+    function updateSelectedAuthId(id: string | null) {
+        selectedAuthId.value = id;
+    }
+
     return {
         // State
         selectedRoute,
@@ -38,5 +42,6 @@ export const useSpecStore = defineStore('spec', () => {
         sync,
         updateSelectedRoute,
         updateSpec,
+        updateSelectedAuthId,
     };
 });

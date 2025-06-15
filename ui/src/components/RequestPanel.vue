@@ -26,7 +26,7 @@
             />
 
             <div class="flex-1 p-4 overflow-y-auto">
-                <div class="flex-1 p-4 overflow-y-auto">
+                <div :key="refreshKey" class="flex-1 p-4 overflow-y-auto">
                     <ParamsTab v-if="activeTab === 'params'" :route="route" v-model="requestData.params" />
 
                     <BodyTab v-else-if="activeTab === 'body'" :route="route" v-model="requestData.body" />
@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import Btn from '@/components/Common/Btn.vue';
 import RequestTabs from './RequestTabs.vue';
 import ParamsTab from '@/components/Tabs/ParamsTab.vue';
@@ -75,6 +75,8 @@ const props = defineProps<{
     route: OpenApiRoute | null;
     loading?: boolean;
 }>();
+
+const refreshKey = ref(0);
 
 const emit = defineEmits(['toggle-editing', 'send-request']);
 
@@ -110,6 +112,21 @@ onMounted(async () => {
         vsLog(auth, 'credential @ panel mount');
     }
 });
+
+watch(
+    () => specStore.selectedAuthId,
+    async newId => {
+        if (!newId) return;
+
+        const auth = await extensionBridge.getCredentialById(newId);
+        if (auth) {
+            requestData.value.authHeader.value = auth.value;
+            requestData.value.authHeader.key = auth.credential.key;
+            refreshKey.value++;
+        }
+    },
+    { immediate: false },
+);
 </script>
 
 <style scoped></style>

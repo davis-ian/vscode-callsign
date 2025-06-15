@@ -43,23 +43,22 @@ export class AuthService {
 
         vscode.window.showInformationMessage(`Auth header "${credential.name}" saved`);
 
-        await this.context.workspaceState.update('callsign.selectedAuthId', id);
-
-        logInfo('updated selected auth id: ', id);
+        this.setActiveCredential(id);
         return id;
     }
 
-    async setActiveCredential(id: string): Promise<void> {
+    async setActiveCredential(id: string): Promise<boolean> {
         const existing = await this.getCredential(id);
 
         if (!existing) {
             vscode.window.showErrorMessage('Invalid header id');
-            return;
+            return false;
         }
 
         await this.context.workspaceState.update('callsign.selectedAuthId', id);
         vscode.window.showInformationMessage(`Auth header "${existing.credential.name}" saved`);
         logInfo('updated selected auth id: ', id);
+        return true;
     }
 
     /**

@@ -51,10 +51,10 @@ import TextInput from '@/components/Common/TextInput.vue';
 import Card from '@/components/Common/Card.vue';
 import Btn from '@/components/Common/Btn.vue';
 import { extensionBridge } from '@/services/ExtensionBridge.ts';
-import { useSpecStore } from '@/stores/spec';
+// import { useSpecStore } from '@/stores/spec';
 import { vsLogError } from '@/utilities/extensionLogger';
 
-const specStore = useSpecStore();
+// const specStore = useSpecStore();
 
 const apiKey = ref('');
 const bearer = ref('');
@@ -111,28 +111,28 @@ const isOpen = computed({
     set: value => emit('update:modelValue', value),
 });
 
-async function preloadSelectedAuth() {
-    if (!specStore.selectedAuthId) return;
+// async function preloadSelectedAuth() {
+//     if (!specStore.selectedAuthId) return;
 
-    try {
-        const resp = await extensionBridge.getCredentialById(specStore.selectedAuthId);
+//     try {
+//         const resp = await extensionBridge.getCredentialById(specStore.selectedAuthId);
 
-        if (!resp?.credential) return;
+//         // if (!resp?.credential) return;
 
-        if (resp.credential.type === 'bearer') {
-            selectedAuthType.value = 'bearer';
-            bearer.value = resp.value;
-        } else if (resp.credential.type === 'api-key') {
-            selectedAuthType.value = 'api-key';
-            apiKey.value = resp.value;
-        }
-    } catch (err) {
-        console.error('Failed to get auth header:', err);
-    }
-}
+//         // if (resp.credential.type === 'bearer') {
+//         //     selectedAuthType.value = 'bearer';
+//         //     bearer.value = resp.value;
+//         // } else if (resp.credential.type === 'api-key') {
+//         //     selectedAuthType.value = 'api-key';
+//         //     apiKey.value = resp.value;
+//         // }
+//     } catch (err) {
+//         console.error('Failed to get auth header:', err);
+//     }
+// }
 
 onMounted(() => {
-    preloadSelectedAuth();
+    // preloadSelectedAuth();
 
     window.addEventListener('message', event => {
         const { command, data } = event.data;
