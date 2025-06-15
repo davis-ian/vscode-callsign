@@ -5,3 +5,11 @@ node_modules
 *.vsix
 
 *.env
+.env
+.vscode/
+node_modules/
+**/*.ts
+**/*.map
+ui/
+ui-dist/
+tests/

@@ -456,14 +456,22 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
     );
 }
 
+interface RouteQuickPickItem extends vscode.QuickPickItem {
+    route?: OpenApiRoute;
+}
+
 export async function pickRouteQuickly(
     provider: RouteTreeProvider,
     placeholder = 'Select a route...',
     context?: vscode.ExtensionContext,
     filterFn?: (route: OpenApiRoute) => boolean,
-) {
-    const allRoutes = provider.getAllRoutes();
-    const items: vscode.QuickPickItem[] = [
+): Promise<OpenApiRoute | undefined> {
+    let allRoutes = provider.getAllRoutes();
+    if (filterFn) {
+        allRoutes = allRoutes.filter(filterFn);
+    }
+
+    const items: RouteQuickPickItem[] = [
         { label: '$(arrow-left) Back', description: '', alwaysShow: true },
         ...allRoutes.map(route => ({
             label: `${route.method.toUpperCase()} ${route.path}`,
@@ -473,7 +481,7 @@ export async function pickRouteQuickly(
     ];
 
     const picked = await vscode.window.showQuickPick(items, {
-        placeHolder: 'Search API route...',
+        placeHolder: placeholder,
         matchOnDescription: true,
         matchOnDetail: true,
     });
@@ -485,7 +493,7 @@ export async function pickRouteQuickly(
         return;
     }
 
-    return picked;
+    return picked.route;
 }
 
 async function showAuthQuickPick(authService: AuthService, context: vscode.ExtensionContext) {

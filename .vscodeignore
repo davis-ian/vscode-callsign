@@ -12,3 +12,12 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+.env
+.vscode/
+node_modules/
+**/*.ts
+**/*.map
+ui/
+ui-dist/
+tests/
+*extension/callsign-debug.json
