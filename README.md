@@ -1,151 +1,118 @@
-# Callsign 🛰️
+# 🚀 Callsign – OpenAPI Explorer & HTTP Client for VS Code
 
-**Callsign** is a modern, VS Code-native OpenAPI companion built for full-stack developers. It simplifies local API development by providing an integrated, fast, and beautiful interface for exploring, testing, and generating code from OpenAPI specs—all without leaving VS Code.
+Callsign is a modern, developer-first OpenAPI extension for VS Code that turns your Swagger spec into an interactive API explorer and HTTP client—without leaving your editor.
+
+Whether you're building an API or consuming one, Callsign helps you **explore**, **test**, and **generate** client code from your OpenAPI spec.
+
+---
 
 ## ✨ Features
 
--   🔍 **OpenAPI Viewer** — Beautiful, readable endpoint explorer grouped by tags, like Swagger UI, but faster and more responsive.
--   🧩 **VS Code Native** — Works directly in your editor, with no browser tabs or context switching.
--   ⚙️ **Expandable Endpoints** — Click any endpoint to view method, description, request body, response schema, and more.
--   🧪 **Interactive Testing (planned)** — Run API requests from inside the panel with saved environment headers.
--   🛠️ **Client Code Generation (planned)** — Generate TypeScript client code for calling endpoints, scoped by tag.
--   🧪 **Mock Server Preview (planned)** — Generate mock endpoints to simulate backend during frontend development.
--   🎯 **Lightweight & Fast** — Minimal dependencies and native performance inside the VS Code webview.
+-   🔍 **OpenAPI Viewer**
+    Instantly browse your OpenAPI spec in a fast, readable UI—grouped by tag like Swagger UI, but native to VS Code.
 
-> TODO: Add screenshots or GIFs (ex: `images/overview.gif`, `images/expanding.gif`)
+-   ⚙️ **Expandable Endpoints**
+    Click to expand any route and view method, description, path parameters, and more.
 
-\!\[feature X\]\(images/feature-x.png\)
+-   🧩 **VS Code Native**
+    Designed to feel right at home inside your editor, using native APIs and webviews.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+-   💻 **No Context Switching**
+    Stay inside your dev environment—no tabs, no clutter.
 
----
+-   🧪 **API Request Panel**
+    Preview and send real requests with headers, path and query params.
 
-## 📦 Requirements
+-   🛠️ **Code Generation**
+    Generate TypeScript clients using `openapi-typescript-codegen` directly from a saved spec.
 
-Callsign reads OpenAPI JSON files. You can:
-
--   Load a local file.
--   Load a remote OpenAPI URL (CORS must be enabled).
--   Auto-load from a `swagger.json` in your workspace (coming soon).
-
-> No external services required.
-
-## ⚙️ Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
--   `myExtension.enable`: Enable/disable this extension.
--   `myExtension.thing`: Set to `blah` to do something.
-
-> TODO: Add settings when environment variables, theme customization, or auto-loading are implemented.
-
-## 💻 Who It's For
-
-Callsign is built for:
-
--   Frontend developers consuming REST APIs.
--   Full-stack teams working locally across frontend/backend code.
--   Developers who prefer working **inside VS Code**.
+-   🧪 **Mock Server Support (planned)**
+    Preview and simulate endpoints without needing the backend live.
 
 ---
 
-## 🐞 Known Issues
+## 📦 Usage
 
--   Currently only supports OpenAPI v3 JSON.
--   No support for authentication headers or auth flows (coming soon).
--   Testing feature is in progress.
+1. **Open Command Palette** → `Callsign: Show Commands`
+   Or use the default shortcut: `Ctrl+Shift+c`
+
+2. **Choose a spec** from saved URLs or paste a new OpenAPI spec URL
+
+3. **Browse** endpoints grouped by tag
+
+4. **Click any route** to view its method, summary, parameters, and schema (if available)
+
+> Want to test the API or generate code? That's next on the roadmap—stay tuned!
+
+---
+
+## 💻 Developer Experience
+
+-   Minimal runtime dependencies
+-   Offline support for local OpenAPI files
+-   Fully native to VS Code (no Electron hacks or browser dependencies)
+-   Codegen powered by [`openapi-typescript-codegen`](https://github.com/ferdikoomen/openapi-typescript-codegen)
+
+---
+
+## 🧠 Roadmap
+
+Callsign is built to become a single-source OpenAPI toolkit inside VS Code:
+
+### ✅ MVP
+
+-   [x] Load OpenAPI v3 spec from URL
+-   [x] Tree view grouped by tag
+-   [x] Route expansion + details
+-   [x] Add basic auth / API key support
+-   [x] Add pinned routes
+-   [x] Add saved requests history
+-   [x] Code generation (TS clients)
+
+### 🛠️ In Progress
+
+-   [ ] Add testing UI
+
+### 🔜 Planned
+
+-   [ ] Mock server preview
+-   [ ] Theme customization
+-   [ ] File-based spec loading (local dev)
 
 ---
 
 ## 📓 Release Notes
 
-### 0.1.0
+### v0.1.0
 
--   Initial launch with panel UI
--   Grouped endpoints by tag
--   Route expansion and display of summary, method, and path
-
-> TODO: Fill in future releases.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+-   Initial release
+-   Grouped route explorer
+-   Route details panel
+-   Support for OpenAPI v3.0 JSON
+-   Client Code generation
 
 ---
 
-## Following extension guidelines
+## 📬 Author
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
--   [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
--   Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
--   Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
--   Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
--   [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
--   [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-## 🧠 Vision & Roadmap
-
-Callsign aims to be the **Postman + Swagger UI + OpenAPI generator**—inside VS Code.
-
-### ✅ MVP Goals
-
--   [x] Load OpenAPI from URL or file
--   [x] Display grouped route list
--   [x] Expand route for details
-
-### 🛠️ Next Sprints
-
--   [ ] Add request body/response schema display
--   [ ] Add API testing UI
--   [ ] Add client code generator (TS)
--   [ ] Add mock server generator
--   [ ] Add dark/light theme auto-detection
--   [ ] Add auth/token support
+Built by [Ian Davis](https://iandavis.dev) – a toolmaker for developers who want fewer tabs and better DX.
 
 ---
 
-## 📚 Resources
+## 🙌 Feedback & Contributions
 
--   [VS Code Extension Docs](https://code.visualstudio.com/api)
--   [OpenAPI Spec](https://swagger.io/specification/)
--   [Redocly Inspiration](https://redocly.com/)
--   [Mintlify Docs Inspiration](https://mintlify.com/blog/top-7-api-documentation-tools-of-2025)
-
----
-
-## 🧪 Working with Markdown
-
-You can preview this file in VS Code with:
-
--   `Cmd+\` to split editor
--   `Shift+Cmd+V` to preview
--   `Ctrl+Space` to see Markdown snippets
+💡 Have a feature request or bug? [Submit an issue](https://github.com/your-org/callsign/issues)
+✨ Want to contribute? PRs are welcome!
+⭐ Love the extension? Star it on GitHub and share it with your team.
 
 ---
 
-**Enjoy using Callsign—and may your APIs be well documented!**
+## 🔗 Resources
 
-## 📬 Contact
+-   [VS Code Extension API Docs](https://code.visualstudio.com/api)
+-   [OpenAPI Specification](https://swagger.io/specification/)
+-   [openapi-typescript-codegen](https://github.com/ferdikoomen/openapi-typescript-codegen)
 
-Created by [Ian Davis](https://iandavis.dev) — Built to showcase dev experience and simplify local API work
+---
+
+**Callsign – make your API your ally.**
