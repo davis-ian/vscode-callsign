@@ -27,6 +27,7 @@
 import { extensionBridge } from '@/services/ExtensionBridge';
 import type { AuthHeader, AuthMethod } from '@/types';
 import { computed, onMounted, ref, watch } from 'vue';
+// import TextInput from './Common/TextInput.vue';
 
 const availableAuth = ref<AuthMethod[]>([]);
 const authPreview = ref<AuthHeader | null>(null);

@@ -175,3 +175,9 @@ export interface CodeGenResult {
     files?: string[];
     duration?: number;
 }
+
+export interface CurlBuildResult {
+    curl: string;
+}
+
+export type LogLevel = 'info' | 'warn' | 'error' | 'debug';

@@ -1,24 +1,47 @@
 <template>
-    <div>
-        <CurrentAuthSelect v-model="selectedAuthId" />
+    <div class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium mb-2">Header Key</label>
+            <input
+                v-model="authHeader.key"
+                placeholder="Authorization"
+                class="w-full p-2 border rounded bg-vs-ibg border-vs-border text-vs-efg"
+            />
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium mb-2">Header Value</label>
+            <input
+                v-model="authHeader.value"
+                placeholder="Bearer YOUR_TOKEN"
+                class="w-full p-2 border rounded bg-vs-ibg border-vs-border text-vs-efg"
+            />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import CurrentAuthSelect from '../CurrentAuthSelect.vue';
+// import { extensionBridge } from '@/services/ExtensionBridge';
+import { watch, reactive } from 'vue';
 
 const props = defineProps<{
-    modelValue: string;
+    modelValue: { key: string; value: string };
 }>();
 
-const emit = defineEmits<{
-    'update:modelValue': [value: string];
-}>();
+const emit = defineEmits(['update:modelValue']);
 
-const selectedAuthId = computed({
-    get: () => props.modelValue,
-    set: value => emit('update:modelValue', value),
+const authHeader = reactive({
+    key: props.modelValue?.key || 'Authorization',
+    value: props.modelValue?.value || '',
+});
+
+watch(authHeader, async () => {
+    emit('update:modelValue', { key: authHeader.key, value: authHeader.value });
+
+    // await extensionBridge.updateCredentialFields(props.authId, {
+    //     headerName: authHeader.key,
+    //     value: authHeader.value,
+    // });
 });
 </script>
 

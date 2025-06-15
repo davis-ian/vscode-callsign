@@ -27,6 +27,7 @@ const props = defineProps<{
     hasParams?: boolean;
     hasBody?: boolean;
     showAuth?: boolean;
+    showPreview?: boolean;
 }>();
 
 defineEmits(['update:activeTab']);
@@ -44,9 +45,11 @@ const availableTabs = computed(() => {
 
     // tabs.push({ id: 'headers', label: 'Headers' });
 
-    // if (props.showAuth) {
     tabs.push({ id: 'authId', label: 'Auth' });
-    // }
+
+    if (props.showPreview) {
+        tabs.push({ id: 'preview', label: 'Preview' });
+    }
 
     return tabs;
 });

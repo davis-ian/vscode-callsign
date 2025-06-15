@@ -67,6 +67,16 @@
                 "command": "callsign.copyAsCurl",
                 "title": "Copy as cURL",
                 "category": "Callsign"
+            },
+            {
+                "command": "callsign.listStoredAuth",
+                "title": "Manage Auth Headers",
+                "category": "Callsign"
+            },
+            {
+                "command": "callsign.clearStoredAuth",
+                "title": "Clear All Auth Headers",
+                "category": "Callsign"
             }
         ],
         "views": {

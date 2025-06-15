@@ -1,9 +1,9 @@
 <template>
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col h-full" v-if="route">
         <div>
             <p class="uppercase text-center">Request</p>
         </div>
-        <!-- Header - Fixed at top -->
+
         <div class="p-4 flex-shrink-0">
             <h2 class="font-semibold">
                 <span v-if="route?.method" :class="getMethodColorClass(route?.method)">{{
@@ -16,22 +16,36 @@
             </p>
         </div>
 
-        <!-- Request Tabs - Flexible content area -->
         <div class="flex-1 flex flex-col min-h-0">
             <RequestTabs
                 v-model:activeTab="activeTab"
                 :has-params="hasParams"
                 :has-body="hasBody"
+                :show-preview="true"
                 class="flex-shrink-0"
             />
 
-            <!-- Scrollable content area -->
             <div class="flex-1 p-4 overflow-y-auto">
-                <component :is="currentTabComponent" v-bind="currentTabProps" @update:model-value="handleTabUpdate" />
+                <div class="flex-1 p-4 overflow-y-auto">
+                    <ParamsTab v-if="activeTab === 'params'" :route="route" v-model="requestData.params" />
+
+                    <BodyTab v-else-if="activeTab === 'body'" :route="route" v-model="requestData.body" />
+
+                    <HeadersTab v-else-if="activeTab === 'headers'" :route="route" v-model="requestData.headers" />
+
+                    <AuthTab v-else-if="activeTab === 'authId'" :route="route" v-model="requestData.authHeader" />
+
+                    <RequestPreviewTab
+                        v-else-if="activeTab === 'preview'"
+                        :route="route"
+                        :params="requestData.params"
+                        :body="requestData.body"
+                        :auth-header="requestData.authHeader"
+                    />
+                </div>
             </div>
         </div>
 
-        <!-- Send Button - Fixed at bottom -->
         <div class="p-4 flex-shrink-0">
             <Btn block @click="handleSend" :disabled="loading">
                 {{ loading ? 'Sending...' : 'Send Request' }}
@@ -41,16 +55,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, type Component, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Btn from '@/components/Common/Btn.vue';
 import RequestTabs from './RequestTabs.vue';
 import ParamsTab from '@/components/Tabs/ParamsTab.vue';
 import BodyTab from '@/components/Tabs/BodyTab.vue';
 import HeadersTab from '@/components/Tabs/HeadersTab.vue';
 import AuthTab from '@/components/Tabs/AuthTab.vue';
+import RequestPreviewTab from './Tabs/RequestPreviewTab.vue';
 import type { OpenApiRoute } from '@/types';
 import { getMethodColorClass } from '@/utilities/dynamicColors';
 import { useSpecStore } from '@/stores/spec';
+import { vsLog } from '@/utilities/extensionLogger';
+import { extensionBridge } from '@/services/ExtensionBridge';
 
 const specStore = useSpecStore();
 
@@ -66,81 +83,31 @@ const requestData = ref({
     params: {},
     body: '',
     headers: {},
-    authId: '',
+    authHeader: {
+        key: 'Authorization',
+        value: '',
+    },
 });
 
 const hasParams = computed(() => (props.route?.details?.parameters?.length ?? 0) > 0);
 const hasBody = computed(() => !!props.route?.details?.requestBody);
 
-const currentTabComponent = computed(() => {
-    const components: Record<string, Component> = {
-        params: ParamsTab,
-        body: BodyTab,
-        headers: HeadersTab,
-        authId: AuthTab,
-    };
-    return components[activeTab.value] || ParamsTab;
-});
-
-const currentTabProps = computed(() => {
-    const baseProps = {
-        route: props.route,
-    };
-
-    switch (activeTab.value) {
-        case 'params':
-            return {
-                ...baseProps,
-                modelValue: requestData.value.params,
-            };
-        case 'body':
-            return {
-                ...baseProps,
-                modelValue: requestData.value.body,
-            };
-        case 'headers':
-            return {
-                ...baseProps,
-                modelValue: requestData.value.headers,
-            };
-        case 'authId':
-            return {
-                ...baseProps,
-                modelValue: requestData.value.authId,
-            };
-        default: {
-            return {
-                ...baseProps,
-                modelValue: requestData.value.params,
-            };
-        }
-    }
-});
-
-function handleTabUpdate(value: any) {
-    switch (activeTab.value) {
-        case 'params':
-            requestData.value.params = value;
-            break;
-        case 'body':
-            requestData.value.body = value;
-            break;
-        case 'headers':
-            requestData.value.headers = value;
-            break;
-        case 'authId':
-            requestData.value.authId = value;
-            break;
-    }
-}
-
 function handleSend() {
+    vsLog(requestData.value, 'request data');
     emit('send-request', requestData.value);
 }
 
-onMounted(() => {
+onMounted(async () => {
     if (specStore.selectedAuthId) {
-        requestData.value.authId = specStore.selectedAuthId;
+        // requestData.value.authId = specStore.selectedAuthId;
+
+        vsLog(specStore.selectedAuthId, 'selectedAuthId @ request panel mount');
+        const auth = await extensionBridge.getCredentialById(specStore.selectedAuthId);
+        if (auth) {
+            requestData.value.authHeader.value = auth.value;
+            requestData.value.authHeader.key = auth.credential.key;
+        }
+        vsLog(auth, 'credential @ panel mount');
     }
 });
 </script>

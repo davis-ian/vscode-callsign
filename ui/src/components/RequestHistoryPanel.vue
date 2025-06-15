@@ -86,9 +86,7 @@ function toggleExpand(snapshot: RequestSnapshot) {
 
 
 
-// function retryRequest(snap: any) {
-//     console.log('TODO: rety request', snap.value);
-// }
+
 </script>
 
 <style scoped></style>

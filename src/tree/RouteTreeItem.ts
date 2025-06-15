@@ -28,8 +28,6 @@ export class RouteTreeItem extends vscode.TreeItem {
         this.iconPath = method ? new vscode.ThemeIcon('circle-small-filled', color) : '';
         this.route = route;
 
-        logInfo(route, 'route');
-
         if (route && context) {
             this.contextValue =
                 route && context ? (isPinned(route, context) ? 'routePinned' : 'routeUnpinned') : undefined;

@@ -14,11 +14,15 @@ import { updateStatusBar } from '../core/statusBar';
 import { isPinned, togglePin } from '../core/pinnedRoutes';
 import { RouteTreeItem } from '../tree/RouteTreeItem';
 import { logInfo, showLogs } from '../core/logger';
-import { buildCurl } from '../utils/curlBuilder';
+import { buildCurl, resolveServerUrl } from '../utils/curlBuilder';
+import { AuthService } from '../services/AuthService';
+import { match } from 'assert';
 
 let panel: vscode.WebviewPanel | undefined;
 
 export function registerCommands(context: vscode.ExtensionContext, routeTreeProvider: RouteTreeProvider) {
+    const authService = new AuthService(context);
+
     context.subscriptions.push(
         vscode.commands.registerCommand('callsign.refreshRoutes', () => {
             const rawSpec = routeTreeProvider.getCurrentSpec();
@@ -30,7 +34,6 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
         }),
 
         vscode.commands.registerCommand('callsign.openRoute', async (route: OpenApiRoute) => {
-            console.log('open route command', route);
             await context.workspaceState.update('callsign.selectedRoute', route);
             routeTreeProvider.refresh();
 
@@ -43,7 +46,6 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
         }),
 
         vscode.commands.registerCommand('callsign.openWebviewPanel', async (initialRoute?: string) => {
-            logInfo('opening web view', initialRoute);
             if (panel) {
                 panel.reveal(vscode.ViewColumn.One); // bring existing panel to front
 
@@ -197,10 +199,6 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
                             vscode.window.showErrorMessage(`Generation failed: ${response.error}`);
                             updateStatusBar('error');
                         }
-                        // console.log('generator', generatorType);
-                        logInfo('input', jsonUrl);
-                        logInfo('output', outputUri[0].fsPath);
-                        logInfo('client', clientType);
                     },
                 );
             } catch (err: any) {
@@ -282,11 +280,28 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
             routeTreeProvider.refresh();
         }),
 
+        vscode.commands.registerCommand('callsign.listStoredAuth', async () => {
+            showAuthQuickPick(authService, context);
+        }),
+
+        vscode.commands.registerCommand('callsign.clearStoredAuth', async () => {
+            await authService.clearAllCredentials();
+        }),
+
         vscode.commands.registerCommand('callsign.copyAsCurl', async (item: RouteTreeItem) => {
             const route = item?.route || (await pickRouteQuickly(routeTreeProvider, 'Select a route to pin'));
             if (!route) return;
 
-            const curl = buildCurl(route!);
+            const rawSpec = routeTreeProvider.getCurrentSpec();
+
+            const specUrl = rawSpec?.path;
+            const serverUrl = rawSpec?.servers?.[0]?.url ?? '/';
+            if (!specUrl || !serverUrl) {
+                throw new Error('Invalid  spec or server url');
+            }
+            const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+
+            const curl = buildCurl(route, {}, resolvedBaseUrl);
             await vscode.env.clipboard.writeText(curl);
             vscode.window.showInformationMessage('cURL copied to clipboard');
         }),
@@ -406,4 +421,93 @@ export async function pickRouteQuickly(
     });
 
     return picked?.route;
+}
+
+async function showAuthQuickPick(authService: AuthService, context: vscode.ExtensionContext) {
+    const creds = await authService.getAllCredentials();
+
+    const items: vscode.QuickPickItem[] = creds.map(cred => ({
+        label: cred.key,
+        description: cred.id,
+        detail: `Last used: ${cred.lastUsed?.toLocaleString() ?? 'Never'}`,
+        alwaysShow: true,
+    }));
+
+    items.push(
+        { label: '$(add)  Add New Auth Header', description: '', alwaysShow: true },
+        { label: '$(edit)  Edit Existing', description: 'Select a header to edit', alwaysShow: true },
+        { label: '$(trash)  Delete Existing', description: 'Select a header to remove', alwaysShow: true },
+    );
+
+    const selection = await vscode.window.showQuickPick(items, {
+        title: 'Manage Auth Headers',
+        placeHolder: 'Select an auth header or an action...',
+    });
+
+    if (!selection) return;
+
+    // Handle action choices
+    switch (selection.label) {
+        case '$(add)  Add New Auth Header': {
+            const key = await vscode.window.showInputBox({ prompt: 'Enter header key' });
+            const value = await vscode.window.showInputBox({ prompt: 'Enter header value (visible)', password: false });
+
+            if (key && value) {
+                await authService.storeCredential({ name: key, key }, value);
+
+                vscode.window.showInformationMessage(`Saved ${key}`);
+            }
+            break;
+        }
+
+        case '$(edit)  Edit Existing': {
+            const editTarget = await vscode.window.showQuickPick(
+                creds.map(c => ({
+                    label: c.key,
+                    description: c.name,
+                })),
+                { title: 'Select a credential to edit' },
+            );
+
+            if (!editTarget) return;
+
+            const existing = creds.find(c => c.key === editTarget.label);
+            const newValue = await vscode.window.showInputBox({
+                prompt: `Update value for ${editTarget.label}`,
+                value: existing ? await authService.getCredential(existing.id).then(s => s?.value ?? '') : '',
+            });
+
+            if (existing && newValue) {
+                await authService.storeCredential({ ...existing }, newValue);
+                vscode.window.showInformationMessage(`Updated ${editTarget.label}`);
+            }
+            break;
+        }
+
+        case '$(trash)  Delete Existing': {
+            const delTarget = await vscode.window.showQuickPick(
+                creds.map(c => ({
+                    label: c.key,
+                    description: c.name,
+                })),
+                { title: 'Select a credential to delete' },
+            );
+
+            if (!delTarget) return;
+
+            const match = creds.find(c => c.key === delTarget.label);
+            if (match) {
+                await authService.deleteCredential(match.id);
+                vscode.window.showWarningMessage(`Deleted ${match.key}`);
+            }
+            break;
+        }
+
+        default: {
+            const match = creds.find(c => c.key === selection.label);
+            if (match) {
+                authService.setActiveCredential(match.id);
+            }
+        }
+    }
 }

@@ -157,6 +157,7 @@ const generatorType = ref<'openapi-typescript-codegen' | '@openapitools/openapi-
 const loading = ref(false);
 
 import { CheckCircle, FolderOpen, XCircle } from 'lucide-vue-next';
+import { vsLog } from '@/utilities/extensionLogger';
 
 const result = ref<any>(null);
 const debugInfo = ref('');
@@ -188,7 +189,7 @@ async function handleGenerate() {
     debugInfo.value = '';
 
     try {
-        console.log('Starting code generation...');
+        vsLog('Starting code generation...');
         debugInfo.value = `Starting generation at ${new Date().toISOString()}\n`;
         debugInfo.value += `URL: ${jsonUrl.value}\n`;
         debugInfo.value += `Output: ${outputDir.value}\n`;
@@ -205,8 +206,6 @@ async function handleGenerate() {
 
         // result.value = response;
         debugInfo.value += `Response received:\n${JSON.stringify(response, null, 2)}`;
-
-        // console.log('Generation result:', response);
     } catch (error) {
         console.error('Generation failed:', error);
         result.value = {

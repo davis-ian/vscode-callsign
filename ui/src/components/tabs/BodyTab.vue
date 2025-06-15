@@ -23,7 +23,6 @@ const components = computed(() => openApiSpec?.value?.components?.schemas || {})
 
 const props = defineProps<{
     route: OpenApiRoute | null;
-    editing: boolean;
     modelValue: string;
 }>();
 

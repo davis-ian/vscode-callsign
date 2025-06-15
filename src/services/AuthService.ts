@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
+import { logInfo } from '../core/logger';
 
 export interface AuthCredential {
     id: string;
     name: string;
-    type: 'bearer' | 'api-key' | 'basic';
+    key: string;
     headerName?: string;
     description?: string;
     createdAt: Date;
@@ -23,35 +24,42 @@ export class AuthService {
         this.context = context;
     }
 
-    /**
-     * Store authentication credential securely using VS Code's built-in secrets API
-     */
     async storeCredential(credential: Omit<AuthCredential, 'id' | 'createdAt'>, value: string): Promise<string> {
         const credentials = await this.getCredentialMetadata();
         const now = new Date();
 
-        // Remove any existing credential of the same type
-        const filtered = credentials.filter(c => c.type !== credential.type);
-        const existing = credentials.find(c => c.type === credential.type);
-
-        let id = existing?.id || this.generateId();
-
+        // Always create a new ID, allow duplicates
+        const id = this.generateId();
         const fullCredential: AuthCredential = {
             ...credential,
             id,
-            createdAt: existing?.createdAt ?? now,
+            createdAt: now,
             lastUsed: now,
         };
 
-        // Store the secret and metadata
+        // Store the secret and add metadata
         await this.context.secrets.store(`auth.${id}`, value);
-        await this.context.globalState.update(AuthService.CREDENTIALS_KEY, [...filtered, fullCredential]);
+        await this.context.globalState.update(AuthService.CREDENTIALS_KEY, [...credentials, fullCredential]);
 
-        vscode.window.showInformationMessage(
-            `Authentication "${credential.name}" ${existing ? 'updated' : 'saved'} securely`,
-        );
+        vscode.window.showInformationMessage(`Auth header "${credential.name}" saved`);
 
+        await this.context.workspaceState.update('callsign.selectedAuthId', id);
+
+        logInfo('updated selected auth id: ', id);
         return id;
+    }
+
+    async setActiveCredential(id: string): Promise<void> {
+        const existing = await this.getCredential(id);
+
+        if (!existing) {
+            vscode.window.showErrorMessage('Invalid header id');
+            return;
+        }
+
+        await this.context.workspaceState.update('callsign.selectedAuthId', id);
+        vscode.window.showInformationMessage(`Auth header "${existing.credential.name}" saved`);
+        logInfo('updated selected auth id: ', id);
     }
 
     /**
@@ -101,6 +109,7 @@ export class AuthService {
         try {
             await Promise.all(all.map(cred => this.deleteCredential(cred.id)));
 
+            await this.context.workspaceState.update('callsign.selectedAuthId', undefined);
             return true;
         } catch {
             return false;
@@ -126,6 +135,10 @@ export class AuthService {
             const updatedCredentials = credentials.filter(c => c.id !== id);
             await this.context.globalState.update(AuthService.CREDENTIALS_KEY, updatedCredentials);
 
+            const selectedId = await this.context.workspaceState.get<string>('callsign.selectedAuthId');
+            if (selectedId === id) {
+                await this.context.workspaceState.update('callsign.selectedAuthId', undefined);
+            }
             vscode.window.showInformationMessage(`Authentication "${credential.name}" deleted`);
             return true;
         } catch (error) {
@@ -134,67 +147,9 @@ export class AuthService {
         }
     }
 
-    /**
-     * Format credential for HTTP header
-     */
     formatForHeader(storedAuth: StoredAuth): { [key: string]: string } {
         const { credential, value } = storedAuth;
-
-        switch (credential.type) {
-            case 'bearer':
-                return { Authorization: `${value.startsWith('Bearer') ? value : 'Bearer ' + value}` };
-
-            case 'api-key':
-                const headerName = credential.headerName || 'X-API-Key';
-                return { [headerName]: value };
-
-            case 'basic':
-                // Assuming value is already base64 encoded username:password
-                return { Authorization: `Basic ${value}` };
-
-            default:
-                throw new Error(`Unsupported credential type: ${credential.type}`);
-        }
-    }
-
-    /**
-     * Helper to create Basic Auth credential
-     */
-    async storeBasicAuth(name: string, username: string, password: string, description?: string): Promise<string> {
-        const encoded = btoa(`${username}:${password}`); // browser-safe Base64
-        return this.storeCredential(
-            {
-                name,
-                type: 'basic',
-                description,
-            },
-            encoded,
-        );
-    }
-
-    /**
-     * Test if credential is still valid (optional)
-     */
-    async testCredential(id: string, testEndpoint?: string): Promise<boolean> {
-        const storedAuth = await this.getCredential(id);
-        if (!storedAuth) {
-            return false;
-        }
-
-        if (!testEndpoint) {
-            return true; // Can't test without endpoint
-        }
-
-        try {
-            const headers = this.formatForHeader(storedAuth);
-            const response = await fetch(testEndpoint, {
-                method: 'GET',
-                headers,
-            });
-            return response.status !== 401 && response.status !== 403;
-        } catch {
-            return false;
-        }
+        return { [credential.key]: value };
     }
 
     private async getCredentialMetadata(): Promise<AuthCredential[]> {

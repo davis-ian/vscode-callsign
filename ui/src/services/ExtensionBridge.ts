@@ -10,6 +10,9 @@ import type {
     LoadJsonOptions,
     OpenApiSpec,
     StoredAuth,
+    OpenApiRoute,
+    CurlBuildResult,
+    LogLevel,
 } from '@/types';
 
 class ExtensionBridge {
@@ -79,6 +82,10 @@ class ExtensionBridge {
         return this.callExtension('vueAppReady');
     }
 
+    async writeLog(level: LogLevel, ...args: any[]): Promise<void> {
+        return this.callExtension('writeLog', { level, args });
+    }
+
     async getAuthHeader(credentialId: string): Promise<AuthHeader | null> {
         return this.callExtension<AuthHeader | null>('getAuthHeader', { credentialId });
     }
@@ -112,6 +119,10 @@ class ExtensionBridge {
         value: string;
     }): Promise<{ success: boolean }> {
         return this.callExtension('storeAuth', credential);
+    }
+
+    async updateCredential(credential: { authId: string; key: string; value: string }): Promise<{ success: boolean }> {
+        return this.callExtension('updateAuth', credential);
     }
 
     async getAllCredentials(): Promise<AuthCredential[]> {
@@ -170,6 +181,12 @@ class ExtensionBridge {
         return this.callExtension<void>('saveLastSelectedSpecUrl', { urlId });
     }
 
+    async buildCurl(route: OpenApiRoute, inputData: any = {}): Promise<CurlBuildResult> {
+        const safeRoute = sanitizeRoute(route);
+        console.log('sanitized', safeRoute);
+        return this.callExtension<CurlBuildResult>('buildCurl', { route: safeRoute, inputData });
+    }
+
     private generateRequestId(): string {
         return Math.random().toString(36).substring(2) + Date.now().toString(36);
     }
@@ -177,3 +194,17 @@ class ExtensionBridge {
 
 export const extensionBridge = new ExtensionBridge();
 export type { ExtensionBridge };
+
+function sanitizeRoute(route: OpenApiRoute): Pick<OpenApiRoute, 'method' | 'path' | 'details'> {
+    return {
+        method: route.method,
+        path: route.path,
+        details: {
+            summary: route.details?.summary ?? '',
+            description: route.details?.description ?? '',
+            parameters: route.details?.parameters ?? [],
+            requestBody: route.details?.requestBody ?? undefined,
+            responses: route.details?.responses ?? {},
+        },
+    };
+}

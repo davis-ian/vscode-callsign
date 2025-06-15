@@ -30,17 +30,13 @@
 import type { ApiResponse } from '@/types';
 import { getStatusColorClass } from '@/utilities/dynamicColors';
 import ResponseTabs from './ResponseTabs.vue';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 
-const props = defineProps<{
+defineProps<{
     response: ApiResponse | null;
 }>();
 
 const activeTab = ref('body');
-
-// watch(activeTab, (newVal, oldVal) => {
-//     console.log(newVal, 'activeTab update');
-// });
 </script>
 
 <style scoped></style>

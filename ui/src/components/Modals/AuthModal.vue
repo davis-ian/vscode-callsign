@@ -52,6 +52,7 @@ import Card from '@/components/Common/Card.vue';
 import Btn from '@/components/Common/Btn.vue';
 import { extensionBridge } from '@/services/ExtensionBridge.ts';
 import { useSpecStore } from '@/stores/spec';
+import { vsLogError } from '@/utilities/extensionLogger';
 
 const specStore = useSpecStore();
 
@@ -80,7 +81,7 @@ function getAllCreds() {
     try {
         extensionBridge.getAllCredentials();
     } catch (error) {
-        console.log(error, 'error @ get all creds');
+        vsLogError(error, 'error @ get all creds');
     }
 }
 
@@ -91,7 +92,7 @@ function clearAllCreds() {
         apiKey.value = '';
         bearer.value = '';
     } catch (error) {
-        console.log(error, 'error @ clear all creds');
+        vsLogError(error, 'error @ clear all creds');
     }
 }
 

@@ -2,7 +2,9 @@ import { generateCode } from '../commands/codeGenCommand';
 import { makeAuthenticatedRequest } from '../commands/makeAuthenticatedRequest';
 import { AuthService } from '../services/AuthService';
 import * as vscode from 'vscode';
-import { OpenApiRoute, OpenApiSpec } from '../types';
+import { LogLevel, OpenApiRoute, OpenApiSpec } from '../types';
+import { buildCurl, resolveServerUrl } from '../utils/curlBuilder';
+import { logDebug, logError, logInfo } from '../core/logger';
 
 export async function handleMessage(
     message: any,
@@ -21,15 +23,26 @@ export async function handleMessage(
                 data = await generateCode(payload);
                 break;
 
-            case 'storeAuth':
+            case 'storeAuth': {
                 const authPayload = payload || message.payload;
-                const { type, name: authName, value } = authPayload;
+                const { name, key, value, description } = authPayload;
 
-                const authIdUp = await authService.storeCredential({ name: authName, type }, value);
+                if (!key || !value) {
+                    throw new Error('Both key and value are required to store authentication.');
+                }
 
-                await context.workspaceState.update('callsign.selectedAuthId', authIdUp);
-                data = { success: true };
+                const authId = await authService.storeCredential(
+                    {
+                        name: name || key,
+                        key,
+                        description,
+                    },
+                    value,
+                );
+
+                data = { success: true, authId };
                 break;
+            }
 
             case 'getAllCredentials':
                 data = await authService.getAllCredentials();
@@ -43,6 +56,8 @@ export async function handleMessage(
             case 'getCredentialById':
                 const id = payload?.id || message.id;
                 data = await authService.getCredential(id);
+                logInfo(id, 'ID: getting credential by id @ handler');
+                logInfo(data, 'DATA: getting credential by id @ handler');
                 break;
 
             case 'getAuthHeader':
@@ -113,21 +128,64 @@ export async function handleMessage(
                 break;
 
             case 'vueAppReady':
-                console.log('vue app ready heard!@', initialVueRoute);
-                const lastSelectedSpecUrl = context.workspaceState.get<string>('callsign.lastSelectedSpecUrl');
-                const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
-                const selectedRoute = context.workspaceState.get<OpenApiRoute | null>('callsign.selectedRoute');
-                const authIdDown = context.workspaceState.get<string>('callsign.selectedAuthId');
+                {
+                    logInfo('vue app ready heard!@', initialVueRoute);
+                    const lastSelectedSpecUrl = context.workspaceState.get<string>('callsign.lastSelectedSpecUrl');
+                    const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
+                    const selectedRoute = context.workspaceState.get<OpenApiRoute | null>('callsign.selectedRoute');
+                    const authIdDown = context.workspaceState.get<string>('callsign.selectedAuthId');
+                    logInfo(authIdDown, 'authId @ vue ready');
 
-                data = {
-                    selectedSpecUrl: lastSelectedSpecUrl || null,
-                    openApiSpec: cachedSpec,
-                    selectedRoute: selectedRoute,
-                    selectedAuthId: authIdDown,
-                    initialVueRoute: initialVueRoute,
-                };
+                    data = {
+                        selectedSpecUrl: lastSelectedSpecUrl || null,
+                        openApiSpec: cachedSpec,
+                        selectedRoute: selectedRoute,
+                        selectedAuthId: authIdDown,
+                        initialVueRoute: initialVueRoute,
+                    };
+                }
 
                 break;
+
+            case 'buildCurl':
+                {
+                    const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
+
+                    const { route, inputData } = payload;
+
+                    if (!route) return;
+
+                    const specUrl = cachedSpec?.path;
+                    const serverUrl = cachedSpec?.servers?.[0]?.url ?? '/';
+                    if (!specUrl || !serverUrl) {
+                        throw new Error('Invalid  spec or server url');
+                    }
+                    const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+                    const curl = buildCurl(route, inputData, resolvedBaseUrl);
+
+                    data = { curl };
+
+                    logInfo(curl, 'build curl handled');
+                }
+                break;
+
+            case 'writeLog': {
+                const { level, args } = payload as { level: LogLevel; args: any[] };
+
+                switch (level) {
+                    case 'error':
+                        logError(...args);
+                        break;
+                    case 'info':
+                        logInfo(...args);
+                        break;
+                    case 'debug':
+                        logDebug(...args);
+                        break;
+                    default:
+                        logInfo(...args);
+                }
+            }
 
             default:
                 panel.webview.postMessage({ command: 'error', error: 'Unknown command' });

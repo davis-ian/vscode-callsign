@@ -15,7 +15,7 @@ import type { OpenApiRoute } from '@/types';
 
 const props = defineProps<{
     route: OpenApiRoute | null;
-    modelValue: string;
+    modelValue: Record<string, string>;
 }>();
 </script>
 
