@@ -20,7 +20,9 @@
 
             <div class="flex-1 p-4 overflow-y-auto">
                 <div v-if="activeTab == 'body'">
-                    <pre class="overflow-x-auto p-2 flex-grow max-h-130 text-xs"><code>{{ response?.body }}</code></pre>
+                    <pre
+                        class="overflow-x-auto p-2 flex-grow max-h-130 text-xs border rounded"
+                    ><code>{{ response?.body }}</code></pre>
                 </div>
 
                 <div v-if="activeTab == 'headers'">

@@ -21,7 +21,7 @@
                 class="flex-shrink-0"
             />
 
-            <div class="flex-1 p-4 overflow-y-auto">
+            <div class="flex-1 overflow-y-auto">
                 <div :key="refreshKey" class="flex-1 p-4 overflow-y-auto">
                     <ParamsTab v-if="activeTab === 'params'" :route="route" v-model="requestData.params" />
 
