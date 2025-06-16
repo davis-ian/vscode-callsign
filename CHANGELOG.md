@@ -18,6 +18,10 @@ All notable changes to the "callsign" extension will be documented in this file.
     `Callsign: Search Routes` command added.
     Lets you fuzzy-search and jump to a route by method + path.
 
+-   **Request History Panel**
+    `Callsign: Request History` command added.
+    Lets you details on past requests.
+
 ### 🧩 Improved
 
 -   Refined layout and spacing in the Callsign route panel.

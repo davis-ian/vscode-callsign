@@ -1,5 +1,9 @@
 import { logInfo } from '../core/logger';
 import { AuthService } from '../services/AuthService';
+import { addSnapshot } from '../services/HistoryService';
+import { RequestSnapshot } from '../types';
+import { v4 as uuidv4 } from 'uuid';
+import { buildCurl } from '../utils/curlBuilder';
 
 export async function makeAuthenticatedRequest(payload: any, authService: AuthService) {
     const { endpoint, headers = {}, body, params } = payload;
@@ -63,6 +67,20 @@ export async function makeAuthenticatedRequest(payload: any, authService: AuthSe
     }
 
     // logInfo('Final response body:', responseBody);
+    const snapshot: RequestSnapshot = {
+        id: uuidv4(),
+        timestamp: new Date().toISOString(),
+        method: endpoint.method,
+        path: endpoint.path,
+        status: response.status,
+        requestBody: body,
+        responseBody,
+        queryParams: params,
+        fullUrl: url,
+        route: endpoint, // assuming it's of type OpenApiRoute
+    };
+
+    await addSnapshot(snapshot);
 
     return {
         status: response.status,

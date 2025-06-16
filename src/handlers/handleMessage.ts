@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { LogLevel, OpenApiRoute, OpenApiSpec } from '../types';
 import { buildCurl, resolveServerUrl } from '../utils/curlBuilder';
 import { logDebug, logError, logInfo } from '../core/logger';
+import { addSnapshot, clearHistory, loadHistory } from '../services/HistoryService';
 
 export async function handleMessage(
     message: any,
@@ -133,6 +134,7 @@ export async function handleMessage(
                     const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
                     const selectedRoute = context.workspaceState.get<OpenApiRoute | null>('callsign.selectedRoute');
                     const authIdDown = context.workspaceState.get<string>('callsign.selectedAuthId');
+
                     logInfo(authIdDown, 'authId @ vue ready');
 
                     data = {
@@ -163,6 +165,22 @@ export async function handleMessage(
                     const curl = buildCurl(route, inputData, resolvedBaseUrl);
 
                     data = { curl };
+                }
+                break;
+
+            case 'loadRequestHistory':
+                logInfo('loading history server side');
+                const history = loadHistory();
+
+                logInfo('history: ', history);
+
+                data = history;
+                break;
+            case 'clearRequestHistory':
+                {
+                    await clearHistory();
+
+                    data = { success: true };
                 }
                 break;
 

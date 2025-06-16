@@ -1,9 +1,7 @@
 import type { ApiResponse, OpenApiRoute } from '@/types';
 import { extensionBridge } from './ExtensionBridge';
-import { useRequestHistory } from '@/composables/useRequestHistory';
-import { useSpecStore } from '@/stores/spec';
 
-const { addSnapshot } = useRequestHistory();
+import { useSpecStore } from '@/stores/spec';
 
 export async function sendRequest(
     route: OpenApiRoute,
@@ -64,19 +62,19 @@ export async function sendRequest(
 
     const result = await extensionBridge.makeAuthenticatedRequest(endpoint, headers, body, rawParams);
 
-    addSnapshot({
-        id: crypto.randomUUID?.() || Date.now().toString(),
-        timestamp: new Date().toISOString(),
-        method: route.method,
-        path: route.path,
-        status: result.status,
-        requestBody: bodyInput,
-        responseBody: result.body,
-        queryParams: rawParams,
-        fullUrl: endpoint.url,
-        route: route,
-        curl: curl,
-    });
+    // addSnapshot({
+    //     id: crypto.randomUUID?.() || Date.now().toString(),
+    //     timestamp: new Date().toISOString(),
+    //     method: route.method,
+    //     path: route.path,
+    //     status: result.status,
+    //     requestBody: bodyInput,
+    //     responseBody: result.body,
+    //     queryParams: rawParams,
+    //     fullUrl: endpoint.url,
+    //     route: route,
+    //     curl: curl,
+    // });
 
     result.curl = curl;
     return result;

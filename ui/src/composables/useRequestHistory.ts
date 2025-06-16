@@ -1,40 +1,46 @@
 import { ref } from 'vue';
 import type { RequestSnapshot } from '@/types';
+import { extensionBridge } from '@/services/ExtensionBridge';
+import { vsLog } from '@/utilities/extensionLogger';
 
-const MAX_HISTORY = 10;
-const STORAGE_KEY = 'callsign_request_history';
-
-const requestHistory = ref<RequestSnapshot[]>(load());
-
-function load() {
-    try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    } catch {
-        return [];
-    }
-}
-
-function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(requestHistory.value));
-}
+const requestHistory = ref<RequestSnapshot[]>([]);
 
 export function useRequestHistory() {
-    function addSnapshot(snapshot: RequestSnapshot) {
-        requestHistory.value.unshift(snapshot);
-        if (requestHistory.value.length > MAX_HISTORY) {
-            requestHistory.value.length = MAX_HISTORY;
+    async function loadHistory() {
+        try {
+            vsLog('requesting histroy from vue');
+            const history = await extensionBridge.loadRequestHistory();
+            vsLog('response from extension bridge: ', history);
+            requestHistory.value = Array.isArray(history) ? history : [];
+        } catch (err) {
+            vsLog('Failed to load request history', err);
+            requestHistory.value = [];
         }
-        save();
     }
 
-    function clearHistory() {
-        requestHistory.value = [];
-        save();
+    // async function addSnapshot(snapshot: RequestSnapshot) {
+    //     try {
+    //         vsLog('compasable add  snap', snapshot);
+    //         await extensionBridge.addRequestSnapshot(snapshot);
+    //         await loadHistory(); // refresh after adding
+    //     } catch (err) {
+    //         vsLog('Failed to add request snapshot', err);
+    //     }
+    // }
+
+    async function clearHistory() {
+        try {
+            await extensionBridge.clearRequestHistory();
+            requestHistory.value = [];
+        } catch (err) {
+            vsLog('Failed to clear request history', err);
+        }
     }
 
     return {
         requestHistory,
-        addSnapshot,
+        loadHistory,
+        // addSnapshot,
         clearHistory,
     };
 }

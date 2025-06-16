@@ -1,8 +1,15 @@
-# 🚀 Callsign – OpenAPI Explorer & HTTP Client for VS Code
+# ✈️ Callsign – OpenAPI Explorer & HTTP Client for VS Code
 
 Callsign is a modern, developer-first OpenAPI extension for VS Code that turns your Swagger spec into an interactive API explorer and HTTP client—without leaving your editor.
 
-Whether you're building an API or consuming one, Callsign helps you **explore**, **test**, and **generate** client code from your OpenAPI spec.
+Whether you're building or consuming APIs, Callsign is your all-in-one:
+
+-   VS Code OpenAPI Explorer
+-   Swagger Viewer in VS Code
+-   OpenAPI Client for VS Code
+-   Swagger UI Alternative
+-   HTTP Client built for Swagger
+-   TypeScript Codegen for OpenAPI
 
 ---
 
@@ -104,8 +111,8 @@ Built by [Ian Davis](https://iandavis.dev) – a toolmaker for developers who wa
 
 ## 🙌 Feedback & Contributions
 
-💡 Have a feature request or bug? [Submit an issue](https://github.com/davis-ian/callsign/issues)
-✨ Want to contribute? PRs are welcome!
+💡 Have a feature request or bug? [Submit an issue](https://github.com/davis-ian/vscode-callsign/issues)<br>
+✨ Want to contribute? PRs are welcome!<br>
 ⭐ Love the extension? Star it on GitHub and share it with your team.
 
 ---

@@ -13,6 +13,7 @@ import type {
     OpenApiRoute,
     CurlBuildResult,
     LogLevel,
+    RequestSnapshot,
 } from '@/types';
 
 class ExtensionBridge {
@@ -98,6 +99,19 @@ class ExtensionBridge {
             key: cred.key,
             displayName: `${cred.name} (${cred.key.toUpperCase()})`,
         }));
+    }
+
+    async clearRequestHistory(): Promise<boolean> {
+        return this.callExtension<boolean>('clearRequestHistory');
+    }
+
+    // async addRequestSnapshot(snapshot: RequestSnapshot): Promise<boolean> {
+    //     vsLog('extension bride add snap', snapshot);
+    //     return this.callExtension<boolean>('addRequestSnapshot', snapshot);
+    // }
+
+    async loadRequestHistory(): Promise<RequestSnapshot[]> {
+        return this.callExtension<RequestSnapshot[]>('loadRequestHistory');
     }
 
     async makeAuthenticatedRequest(

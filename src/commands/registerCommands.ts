@@ -285,7 +285,7 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
         }),
 
         vscode.commands.registerCommand('callsign.openSettings', () => {
-            vscode.commands.executeCommand('workbench.action.openSettings', '@ext:yourPublisher.callsign');
+            vscode.commands.executeCommand('workbench.action.openSettings', '@ext:ian-davis.callsign');
         }),
 
         // Non command pallet commands

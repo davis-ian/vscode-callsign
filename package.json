@@ -1,17 +1,56 @@
 {
     "name": "callsign",
-    "displayName": "callsign",
-    "description": "Searchable OpenAPI",
+    "displayName": "Callsign – OpenAPI Client & Explorer",
+    "description": "Explore, test, and generate code from OpenAPI specs directly in VS Code. A fast, native Swagger UI alternative for frontend and full-stack devs.",
+    "publisher": "ian-davis",
+    "icon": "media/icon.png",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.100.0"
     },
+    "author": {
+        "name": "Ian Davis"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/davis-ian/vscode-callsign"
+    },
     "categories": [
-        "Other"
+        "Other",
+        "Programming Languages",
+        "Snippets"
+    ],
+    "keywords": [
+        "openapi",
+        "swagger",
+        "api",
+        "rest",
+        "http client",
+        "api testing",
+        "swagger vscode",
+        "api explorer",
+        "codegen",
+        "mock server",
+        "typescript",
+        "axios",
+        "frontend",
+        "postman",
+        "explorer",
+        "http",
+        "client"
     ],
     "activationEvents": [],
     "main": "./dist/extension.js",
     "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "callsign",
+                    "title": "Callsign",
+                    "icon": "media/activity-bar-icon.svg"
+                }
+            ]
+        },
         "commands": [
             {
                 "command": "callsign.addSpecUrl",
@@ -90,10 +129,14 @@
             }
         ],
         "views": {
-            "explorer": [
+            "callsign": [
                 {
                     "id": "callsign.routes",
                     "name": "Routes"
+                },
+                {
+                    "id": "callsign.history",
+                    "name": "History"
                 }
             ]
         },
@@ -145,6 +188,13 @@
                             }
                         }
                     }
+                },
+                "callsign.historyLimit": {
+                    "type": "number",
+                    "default": 20,
+                    "minimum": 5,
+                    "maximum": 500,
+                    "description": "Maximum number of requests to store in Callsign's request history."
                 }
             }
         }
@@ -184,6 +234,7 @@
         "typescript": "^5.8.3"
     },
     "dependencies": {
-        "pinia": "^3.0.3"
+        "pinia": "^3.0.3",
+        "uuid": "^11.1.0"
     }
 }

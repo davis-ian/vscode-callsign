@@ -13,11 +13,18 @@ export const useSpecStore = defineStore('spec', () => {
     const currentSpec = ref<OpenApiSpec | null>(null);
     const selectedRoute = ref<OpenApiRoute | null>(null);
     const selectedAuthId = ref<string | null>('null');
+    const historyLimit = ref(10);
 
-    function sync(spec: OpenApiSpec | null, route: OpenApiRoute | null, authId: string | null) {
+    function sync(
+        spec: OpenApiSpec | null,
+        route: OpenApiRoute | null,
+        authId: string | null,
+        newHistoryLimit: number | null,
+    ) {
         currentSpec.value = spec;
         selectedRoute.value = route;
         selectedAuthId.value = authId;
+        historyLimit.value = newHistoryLimit || 10;
     }
 
     function updateSelectedRoute(route: OpenApiRoute | null) {
@@ -37,6 +44,7 @@ export const useSpecStore = defineStore('spec', () => {
         selectedRoute,
         selectedAuthId,
         currentSpec,
+        historyLimit,
 
         //Actions
         sync,

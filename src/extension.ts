@@ -10,9 +10,12 @@ import { loadJsonFromUrl } from './utils/fetchJson';
 
 import { initStatusBar, updateStatusBar } from './core/statusBar';
 import { initLogger, logInfo } from './core/logger';
+import { initRequestHistoryService, loadHistory } from './services/HistoryService';
+import { RequestHistoryProvider } from './tree/RequestHistoryProvider';
 
 let currentSpec: OpenApiSpec | undefined;
 let routeTreeProvider: RouteTreeProvider;
+let historyTreeProvider: RequestHistoryProvider;
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -25,12 +28,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
     initStatusBar(context);
     updateStatusBar('no-spec');
-    let rawSpec: OpenApiSpec | undefined = await loadDefaultJson(context);
 
-    // if (rawSpec) {
-    //     dumpSpecToDisk(rawSpec, context);
-    //     updateStatusBar('idle', rawSpec.paths.length, 0);
-    // }
+    initRequestHistoryService(context);
+    historyTreeProvider = new RequestHistoryProvider(context);
+    vscode.window.registerTreeDataProvider('callsign.history', historyTreeProvider);
+
+    let rawSpec: OpenApiSpec | undefined = await loadDefaultJson(context);
 
     routeTreeProvider = new RouteTreeProvider(rawSpec, context);
 
