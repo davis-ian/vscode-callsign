@@ -1,9 +1,10 @@
 import { logInfo } from '../core/logger';
 import { AuthService } from '../services/AuthService';
 import { addSnapshot } from '../services/HistoryService';
+import { RequestHistoryProvider } from '../tree/RequestHistoryProvider';
 import { RequestSnapshot } from '../types';
 import { v4 as uuidv4 } from 'uuid';
-import { buildCurl } from '../utils/curlBuilder';
+import * as vscode from 'vscode';
 
 export async function makeAuthenticatedRequest(payload: any, authService: AuthService) {
     const { endpoint, headers = {}, body, params } = payload;
@@ -81,6 +82,7 @@ export async function makeAuthenticatedRequest(payload: any, authService: AuthSe
     };
 
     await addSnapshot(snapshot);
+    await vscode.commands.executeCommand('callsign.refreshHistoryTree');
 
     return {
         status: response.status,

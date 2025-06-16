@@ -129,13 +129,11 @@ export async function handleMessage(
 
             case 'vueAppReady':
                 {
-                    logInfo('vue app ready heard!@', initialVueRoute);
+                    logInfo('vue app ready', initialVueRoute);
                     const lastSelectedSpecUrl = context.workspaceState.get<string>('callsign.lastSelectedSpecUrl');
                     const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
                     const selectedRoute = context.workspaceState.get<OpenApiRoute | null>('callsign.selectedRoute');
                     const authIdDown = context.workspaceState.get<string>('callsign.selectedAuthId');
-
-                    logInfo(authIdDown, 'authId @ vue ready');
 
                     data = {
                         selectedSpecUrl: lastSelectedSpecUrl || null,
@@ -169,10 +167,7 @@ export async function handleMessage(
                 break;
 
             case 'loadRequestHistory':
-                logInfo('loading history server side');
                 const history = loadHistory();
-
-                logInfo('history: ', history);
 
                 data = history;
                 break;

@@ -39,17 +39,6 @@ export class RouteTreeItem extends vscode.TreeItem {
     }
 }
 
-const methodIcons: Record<string, vscode.ThemeIcon | string> = {
-    get: new vscode.ThemeIcon('circle-small-filled', new vscode.ThemeColor('charts.blue')),
-    post: new vscode.ThemeIcon('circle-small-filled', new vscode.ThemeColor('charts.green')),
-    put: new vscode.ThemeIcon('circle-small-filled', new vscode.ThemeColor('charts.orange')),
-    delete: new vscode.ThemeIcon('circle-small-filled', new vscode.ThemeColor('errorForeground')),
-    // get: new vscode.ThemeIcon('arrow-right', new vscode.ThemeColor('charts.blue')),
-    // post: new vscode.ThemeIcon('add', new vscode.ThemeColor('charts.green')),
-    // put: new vscode.ThemeIcon('edit', new vscode.ThemeColor('charts.orange')),
-    // delete: new vscode.ThemeIcon('trash', new vscode.ThemeColor('errorForeground')),
-};
-
 const methodColors: Record<string, vscode.ThemeColor> = {
     get: new vscode.ThemeColor('charts.blue'),
     post: new vscode.ThemeColor('charts.green'),

@@ -17,10 +17,15 @@ import { logInfo, showLogs } from '../core/logger';
 import { buildCurl, resolveServerUrl } from '../utils/curlBuilder';
 import { AuthService } from '../services/AuthService';
 import { match } from 'assert';
+import { RequestHistoryProvider } from '../tree/RequestHistoryProvider';
 
 let panel: vscode.WebviewPanel | undefined;
 
-export function registerCommands(context: vscode.ExtensionContext, routeTreeProvider: RouteTreeProvider) {
+export function registerCommands(
+    context: vscode.ExtensionContext,
+    routeTreeProvider: RouteTreeProvider,
+    historyTreeProvider: RequestHistoryProvider,
+) {
     const authService = new AuthService(context);
 
     context.subscriptions.push(
@@ -81,6 +86,10 @@ export function registerCommands(context: vscode.ExtensionContext, routeTreeProv
 
         vscode.commands.registerCommand('callsign.showLogs', () => {
             showLogs();
+        }),
+
+        vscode.commands.registerCommand('callsign.refreshHistoryTree', () => {
+            historyTreeProvider.refresh();
         }),
 
         vscode.commands.registerCommand('callsign.quickSearchRoutes', async () => {

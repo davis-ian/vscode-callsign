@@ -15,7 +15,7 @@ import { RequestHistoryProvider } from './tree/RequestHistoryProvider';
 
 let currentSpec: OpenApiSpec | undefined;
 let routeTreeProvider: RouteTreeProvider;
-let historyTreeProvider: RequestHistoryProvider;
+export let historyTreeProvider: RequestHistoryProvider;
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -39,13 +39,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
     vscode.window.registerTreeDataProvider('callsign.routes', routeTreeProvider);
 
-    registerCommands(context, routeTreeProvider);
+    registerCommands(context, routeTreeProvider, historyTreeProvider);
 }
 
 // This method is called when your extension is deactivated
 export function deactivate(context: vscode.ExtensionContext) {
     context.workspaceState.update('callsign.selectedRoute', undefined);
     routeTreeProvider.refresh();
+    historyTreeProvider.refresh();
 }
 
 async function loadDefaultJson(context: vscode.ExtensionContext): Promise<OpenApiSpec | undefined> {
