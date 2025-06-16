@@ -5,6 +5,7 @@
     "publisher": "ian-davis",
     "icon": "media/icon.png",
     "version": "0.0.1",
+    "license": "MIT",
     "engines": {
         "vscode": "^1.100.0"
     },
