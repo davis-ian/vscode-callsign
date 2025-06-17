@@ -1,7 +1,14 @@
 <template>
     <div>
         <!-- <p class="text-sm mb-2 text-vs-efg/70 uppercase">Request Preview</p> -->
-        <Btn variant="outlined" @click="copyToClipboard(curlCommand)">Copy</Btn>
+        <div class="flex justify-end py-2">
+            <Btn variant="outlined" @click="copyToClipboard(curlCommand)">
+                <span class="flex">
+                    <Copy :size="16" class="mr-2" />
+                    Copy
+                </span>
+            </Btn>
+        </div>
         <pre
             class="text-xs p-3 bg-vs-ibg border rounded font-mono whitespace-pre-wrap break-all"
         ><code>{{ curlCommand }}</code></pre>
@@ -13,6 +20,7 @@ import type { OpenApiRoute } from '@/types';
 import { extensionBridge } from '@/services/ExtensionBridge';
 import { onMounted, ref } from 'vue';
 import Btn from '../Common/Btn.vue';
+import { Copy } from 'lucide-vue-next';
 
 const props = defineProps<{
     route: OpenApiRoute;

@@ -2,7 +2,7 @@
     <div class="flex flex-col h-full" v-if="route">
         <div class="p-4 flex-shrink-0">
             <h2 class="font-semibold">
-                <span v-if="route?.method" :class="getMethodColorClass(route?.method)">{{
+                <span v-if="route?.method" :class="getMethodColorClass(route.method)">{{
                     route?.method.toUpperCase()
                 }}</span>
                 {{ route?.path }}
