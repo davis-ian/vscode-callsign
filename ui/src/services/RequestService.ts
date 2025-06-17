@@ -40,7 +40,9 @@ export async function sendRequest(
     if (!specUrl || !serverUrl) {
         throw new Error('Invalid  spec or server url');
     }
-    const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+    // const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);\
+
+    const resolvedBaseUrl = getApiBaseUrlFromSpec(specStore.currentSpec, specUrl);
 
     const endpoint = {
         url: `${resolvedBaseUrl}${path}`,
@@ -97,17 +99,28 @@ function buildCurlCommand(method: string, url: string, headers: Record<string, s
     return parts.join(' \\\n  ');
 }
 
-function resolveServerUrl(specUrl: string, serverUrl: string): string {
+export function getApiBaseUrlFromSpec(spec: any, specUrl: string): string {
     try {
-        // Absolute: return as-is
-        if (serverUrl.startsWith('http')) {
-            return serverUrl;
+        // --- OpenAPI 3.x ---
+        if (spec.openapi && spec.openapi.startsWith('3')) {
+            const servers = spec.servers;
+            if (Array.isArray(servers) && servers.length > 0 && servers[0].url) {
+                const serverUrl = servers[0].url;
+                return new URL(serverUrl, specUrl).toString();
+            }
         }
 
-        // Relative: resolve against the spec origin
-        const base = new URL(specUrl);
-        return new URL(serverUrl, base).toString();
+        // --- Swagger 2.0 / OpenAPI 2.0 ---
+        if (spec.swagger === '2.0' && spec.host) {
+            const scheme = spec.schemes?.includes('https') ? 'https' : 'http';
+            const host = spec.host;
+            const basePath = spec.basePath || '/';
+            return `${scheme}://${host}${basePath}`.replace(/\/+$/, ''); // Trim trailing slash
+        }
+
+        // Fallback
+        return new URL('.', specUrl).toString().replace(/\/+$/, '');
     } catch {
-        return serverUrl; // Fallback to raw string
+        return specUrl;
     }
 }

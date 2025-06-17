@@ -12,7 +12,7 @@ import { initStatusBar, updateStatusBar } from './core/statusBar';
 import { initLogger, logInfo } from './core/logger';
 import { initRequestHistoryService, loadHistory } from './services/HistoryService';
 import { RequestHistoryProvider } from './tree/RequestHistoryProvider';
-import { initializeCallsignStorage } from './state/init';
+import { initializeCallsignStorage, simFreshInstall } from './state/init';
 import { getCachedSpec, getLastSelectedSpecUrl, setSelectedRoute } from './state/workspace';
 
 let currentSpec: OpenApiSpec | undefined;
@@ -24,6 +24,8 @@ export let historyTreeProvider: RequestHistoryProvider;
 export async function activate(context: vscode.ExtensionContext) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
+    await simFreshInstall(context);
+
     initLogger();
     initializeCallsignStorage(context);
     logInfo('Callsign extension activated');
@@ -45,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate(context: vscode.ExtensionContext) {
+export async function deactivate(context: vscode.ExtensionContext) {
     setSelectedRoute(context, undefined);
     routeTreeProvider?.refresh();
     historyTreeProvider?.refresh();

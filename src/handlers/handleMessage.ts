@@ -3,7 +3,7 @@ import { makeAuthenticatedRequest } from '../commands/makeAuthenticatedRequest';
 import { AuthService } from '../services/AuthService';
 import * as vscode from 'vscode';
 import { LogLevel, OpenApiRoute, OpenApiSpec } from '../types';
-import { buildCurl, resolveServerUrl } from '../utils/curlBuilder';
+import { buildCurl, getApiBaseUrlFromSpec, resolveServerUrl } from '../utils/curlBuilder';
 import { logDebug, logError, logInfo } from '../core/logger';
 import { addSnapshot, clearHistory, loadHistory } from '../services/HistoryService';
 import { getSpecUrls, setSpecUrls } from '../state/global';
@@ -163,7 +163,8 @@ export async function handleMessage(
                 if (!specUrl || !serverUrl) {
                     throw new Error('Invalid  spec or server url');
                 }
-                const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+                // const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+                const resolvedBaseUrl = getApiBaseUrlFromSpec(cachedSpec, specUrl);
                 const curl = buildCurl(route, inputData, resolvedBaseUrl);
 
                 data = { curl };

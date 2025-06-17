@@ -13,13 +13,15 @@ import { generateCode } from './codeGenCommand';
 import { updateStatusBar } from '../core/statusBar';
 import { RouteTreeItem } from '../tree/RouteTreeItem';
 import { logInfo, showLogs } from '../core/logger';
-import { buildCurl, resolveServerUrl } from '../utils/curlBuilder';
+import { buildCurl, getApiBaseUrlFromSpec, resolveServerUrl } from '../utils/curlBuilder';
 import { AuthService } from '../services/AuthService';
 
 import { RequestHistoryProvider } from '../tree/RequestHistoryProvider';
 import {
     getCachedSpec,
     getLastOutputDir,
+    getLastSelectedSpecUrl,
+    getPinnedRoutes,
     isPinned,
     setCachedSpec,
     setLastOutputDir,
@@ -270,6 +272,8 @@ export function registerCommands(
                 } else {
                     vscode.window.showWarningMessage('That URL is already added');
                 }
+
+                vscode.commands.executeCommand('callsign.loadRoutesFromSavedSpec', url);
             }
         }),
 
@@ -296,6 +300,12 @@ export function registerCommands(
             const updated = configuredUrls.filter(u => u !== picked.spec);
 
             await setSpecUrls(context, updated);
+
+            const lastSelectedSpecUrl = getLastSelectedSpecUrl(context);
+
+            if (lastSelectedSpecUrl === picked.label) {
+                routeTreeProvider.clearRoutes();
+            }
 
             vscode.window.showInformationMessage(`Deleted ${picked.spec} from Callsign spec URLs.`);
         }),
@@ -334,102 +344,81 @@ export function registerCommands(
 
         vscode.commands.registerCommand('callsign.copyAsCurl', async (item: RouteTreeItem) => {
             const route = item?.route || (await pickRouteQuickly(routeTreeProvider, 'Select a route to pin'));
+            logInfo('route selected for curl');
+            logInfo(route);
             if (!route) return;
 
-            const rawSpec = routeTreeProvider.getCurrentSpec();
+            const rawSpec = getCachedSpec<OpenApiSpec>(context);
 
             const specUrl = rawSpec?.path;
+
+            logInfo('rawSpec ', rawSpec);
+            logInfo(rawSpec?.servers);
             const serverUrl = rawSpec?.servers?.[0]?.url ?? '/';
             if (!specUrl || !serverUrl) {
                 throw new Error('Invalid  spec or server url');
             }
-            const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+            // const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+            const resolvedBaseUrl = getApiBaseUrlFromSpec(rawSpec, specUrl);
+            logInfo(resolvedBaseUrl, 'baseUrl');
 
             const curl = buildCurl(route, {}, resolvedBaseUrl);
+            logInfo(curl);
+            logInfo('built curl command');
             await vscode.env.clipboard.writeText(curl);
             vscode.window.showInformationMessage('cURL copied to clipboard');
         }),
 
-        vscode.commands.registerCommand('callsign.loadRoutesFromSavedSpec', async () => {
-            const savedSpecs = getSpecUrls(context);
+        vscode.commands.registerCommand(
+            'callsign.loadRoutesFromSavedSpec',
+            async (url: string | undefined = undefined) => {
+                let selected = url;
 
-            if (!savedSpecs || savedSpecs.length === 0) {
-                vscode.window.showWarningMessage('No saved spec URLs found.');
-                return;
-            }
+                if (!selected) {
+                    const savedSpecs = getSpecUrls(context);
 
-            const selected = await vscode.window.showQuickPick(savedSpecs, {
-                placeHolder: 'Select a saved spec to load routes from',
-            });
+                    if (!savedSpecs || savedSpecs.length === 0) {
+                        vscode.window.showWarningMessage('No saved spec URLs found.');
+                        return;
+                    }
 
-            if (!selected) return;
+                    selected = await vscode.window.showQuickPick(savedSpecs, {
+                        placeHolder: 'Select a saved spec to load routes from',
+                    });
+                }
 
-            try {
-                const rawSpec: OpenApiSpec = await loadJsonFromUrl(selected);
-                routeTreeProvider.setRoutes(rawSpec, context);
+                if (!selected) return;
 
-                await setLastSelectedSpecUrl(context, rawSpec.path);
-                await setCachedSpec(context, rawSpec);
+                await loadSpecFromUrl(selected, routeTreeProvider, context);
 
-                panel?.webview.postMessage({
-                    command: 'syncState',
-                    spec: rawSpec,
-                });
-                vscode.window.showInformationMessage(`Loaded routes from ${selected}`);
-            } catch (err) {
-                vscode.window.showErrorMessage(`Failed to load spec: ${(err as Error).message}`);
-            }
-        }),
+                try {
+                    vscode.window.showInformationMessage(`Loaded routes from ${selected}`);
+                } catch (err) {
+                    vscode.window.showErrorMessage(`Failed to load spec: ${(err as Error).message}`);
+                }
+            },
+        ),
 
         vscode.commands.registerCommand('callsign.showRoutesView', () => {
             vscode.commands.executeCommand('workbench.views.explorer.callsign.routes');
         }),
 
-        vscode.commands.registerCommand('callsign.manageSpecs', async () => {
-            const selection = await vscode.window.showQuickPick([
-                {
-                    label: '$(arrow-left)  Back',
-                    command: 'callsign.showCommands',
-                },
-                {
-                    label: '$(file-code)  Load OpenAPI Spec',
-                    description: 'Load or refresh your OpenAPI spec',
-                    command: 'callsign.loadRoutesFromSavedSpec',
-                },
-                {
-                    label: '$(add)  Add New Spec URL',
-                    description: 'Save a new OpenAPI spec URL',
-                    command: 'callsign.addSpecUrl',
-                },
-                {
-                    label: '$(trash)  Delete Spec URL',
-                    description: 'Remove a saved OpenAPI spec URL',
-                    command: 'callsign.deleteSpecUrlFromSettings',
-                },
-            ]);
-
-            if (selection?.command) {
-                vscode.commands.executeCommand(selection.command);
-            }
-        }),
-
         vscode.commands.registerCommand('callsign.showCommands', async () => {
-            const selection = await vscode.window.showQuickPick(
-                [
+            const pinnedRoutes = getPinnedRoutes(context);
+            const allRoutes = routeTreeProvider.getAllRoutes();
+            const specUrls = getSpecUrls(context);
+
+            logInfo('alll routes', allRoutes.length);
+            logInfo('pinned routes', pinnedRoutes.length);
+
+            const items: CallsignCommandItem[] = [];
+
+            if (allRoutes.length) {
+                items.push(
                     {
                         label: '$(search)  Search Routes',
                         description: 'Search routes in your OpenAPI spec',
                         command: 'callsign.quickSearchRoutes',
-                    },
-                    {
-                        label: '$(rocket)  Generate API Client Code',
-                        description: 'Run code generation for current spec',
-                        command: 'callsign.generateCode',
-                    },
-                    {
-                        label: '$(clock)  View Request History',
-                        description: 'View previous requests you’ve made',
-                        command: 'callsign.openHistoryPage',
                     },
                     {
                         label: '$(copy)  Copy as cURL',
@@ -437,31 +426,76 @@ export function registerCommands(
                         command: 'callsign.copyAsCurl',
                     },
                     {
-                        label: '$(key)  Manage Auth',
-                        description: 'Manages stored  auth headers',
-                        command: 'callsign.listStoredAuth',
+                        label: '$(rocket)  Generate API Client Code',
+                        description: 'Run code generation for current spec',
+                        command: 'callsign.generateCode',
                     },
-                    {
-                        label: '$(file-code)  Manage Specs',
-                        description: 'Save new OpenAPI spec URL',
-                        command: 'callsign.manageSpecs',
-                    },
+                );
+            }
 
+            items.push({
+                label: '$(add)  Add New Spec URL',
+                description: 'Save a new OpenAPI spec URL',
+                command: 'callsign.addSpecUrl',
+            });
+
+            if (specUrls.length) {
+                items.push(
                     {
-                        label: '$(gear)  Settings',
-                        description: 'Open Callsign extension settings',
-                        command: 'callsign.openSettings',
+                        label: '$(file-code)  Set Active OpenAPI Spec',
+                        description: 'Load or refresh your OpenAPI spec',
+                        command: 'callsign.loadRoutesFromSavedSpec',
                     },
                     {
-                        label: '$(output)  Show Logs',
-                        description: 'Open Callsign output channel logs',
-                        command: 'callsign.showLogs',
+                        label: '$(trash)  Remove Spec URL',
+                        description: 'Remove a saved OpenAPI spec URL',
+                        command: 'callsign.deleteSpecUrlFromSettings',
                     },
-                ],
+                );
+            }
+
+            if (allRoutes.length) {
+                items.push({
+                    label: '$(file-code)  Pin Route',
+                    description: 'Save a pinned routed',
+                    command: 'callsign.pinRoute',
+                });
+            }
+
+            if (pinnedRoutes.length) {
+                items.push({
+                    label: '$(file-code)  Un-Pin Route',
+                    description: 'Remove a pinned routed',
+                    command: 'callsign.unpinRoute',
+                });
+            }
+
+            items.push(
                 {
-                    placeHolder: 'Select a Callsign command',
+                    label: '$(clock)  View Request History',
+                    description: 'View previous requests you’ve made',
+                    command: 'callsign.openHistoryPage',
+                },
+                {
+                    label: '$(key)  Manage Auth',
+                    description: 'Manages stored  auth headers',
+                    command: 'callsign.listStoredAuth',
+                },
+                {
+                    label: '$(gear)  Settings',
+                    description: 'Open Callsign extension settings',
+                    command: 'callsign.openSettings',
+                },
+                {
+                    label: '$(output)  Show Logs',
+                    description: 'Open Callsign output channel logs',
+                    command: 'callsign.showLogs',
                 },
             );
+
+            const selection = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select a Callsign command',
+            });
 
             if (selection?.command) {
                 vscode.commands.executeCommand(selection.command);
@@ -543,7 +577,7 @@ async function showAuthQuickPick(authService: AuthService, context: vscode.Exten
         }
 
         case '$(add)  Add New Auth Header': {
-            const key = await vscode.window.showInputBox({ prompt: 'Enter header key' });
+            const key = await vscode.window.showInputBox({ prompt: 'Enter header key', value: 'Authorization' });
             const value = await vscode.window.showInputBox({ prompt: 'Enter header value', password: false });
 
             if (key && value) {
@@ -615,4 +649,21 @@ async function showAuthQuickPick(authService: AuthService, context: vscode.Exten
             }
         }
     }
+}
+
+async function loadSpecFromUrl(url: string, provider: RouteTreeProvider, context: vscode.ExtensionContext) {
+    const rawSpec: OpenApiSpec = await loadJsonFromUrl(url);
+    provider.setRoutes(rawSpec, context);
+
+    await setLastSelectedSpecUrl(context, rawSpec.path);
+    await setCachedSpec(context, rawSpec);
+
+    panel?.webview.postMessage({
+        command: 'syncState',
+        spec: rawSpec,
+    });
+}
+
+interface CallsignCommandItem extends vscode.QuickPickItem {
+    command: string;
 }

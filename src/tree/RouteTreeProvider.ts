@@ -53,6 +53,16 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
         }
     }
 
+    clearRoutes(): void {
+        this.currentSpec = null;
+        this.groupedRoutes = {};
+        this._routes = [];
+        this._pinnedRoutes = [];
+
+        updateStatusBar('no-spec');
+        this._onDidChangeTreeData.fire(undefined);
+    }
+
     refresh(): void {
         if (this._extensionContext) {
             this._pinnedRoutes = getPinnedRoutes<OpenApiRoute>(this._extensionContext);

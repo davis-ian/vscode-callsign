@@ -47,7 +47,7 @@ export function buildCurl(
     return curl;
 }
 
-export function resolveServerUrl(specUrl: string, serverUrl: string): string {
+export function resolveServerUrl(specUrl: string, serverUrl: string, basePath?: string): string {
     try {
         // Absolute: return as-is
         if (serverUrl.startsWith('http')) {
@@ -59,5 +59,31 @@ export function resolveServerUrl(specUrl: string, serverUrl: string): string {
         return new URL(serverUrl, base).toString();
     } catch {
         return serverUrl; // Fallback to raw string
+    }
+}
+
+export function getApiBaseUrlFromSpec(spec: any, specUrl: string): string {
+    try {
+        // --- OpenAPI 3.x ---
+        if (spec.openapi && spec.openapi.startsWith('3')) {
+            const servers = spec.servers;
+            if (Array.isArray(servers) && servers.length > 0 && servers[0].url) {
+                const serverUrl = servers[0].url;
+                return new URL(serverUrl, specUrl).toString();
+            }
+        }
+
+        // --- Swagger 2.0 / OpenAPI 2.0 ---
+        if (spec.swagger === '2.0' && spec.host) {
+            const scheme = spec.schemes?.includes('https') ? 'https' : 'http';
+            const host = spec.host;
+            const basePath = spec.basePath || '/';
+            return `${scheme}://${host}${basePath}`.replace(/\/+$/, ''); // Trim trailing slash
+        }
+
+        // Fallback
+        return new URL('.', specUrl).toString().replace(/\/+$/, '');
+    } catch {
+        return specUrl;
     }
 }

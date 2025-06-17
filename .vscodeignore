@@ -19,3 +19,4 @@ node_modules/
 **/*.map
 tests/
 !ui-dist/**
+**/node_modules/**
