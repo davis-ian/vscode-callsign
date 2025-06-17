@@ -3,7 +3,7 @@ import { OpenApiRoute, OpenApiSpec } from '../types';
 import { RouteTreeItem } from './RouteTreeItem';
 import { groupRoutesByTag } from '../utils/fetchJson';
 import { updateStatusBar } from '../core/statusBar';
-import { getPinnedRoutes } from '../core/pinnedRoutes';
+import { getPinnedRoutes } from '../state/workspace';
 
 export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<RouteTreeItem | undefined | void> = new vscode.EventEmitter();
@@ -12,6 +12,7 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
     private groupedRoutes: Record<string, OpenApiRoute[]> = {};
     private currentSpec: OpenApiSpec | null = null;
     private _routes: OpenApiRoute[] = [];
+    private _pinnedRoutes: OpenApiRoute[] = [];
     private _extensionContext: vscode.ExtensionContext | undefined;
 
     constructor(spec?: OpenApiSpec, context?: vscode.ExtensionContext) {
@@ -21,6 +22,9 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
             this.groupedRoutes = groupRoutesByTag(spec);
             this.currentSpec = spec;
             this._routes = Object.values(this.groupedRoutes).flat();
+            if (context) {
+                this._pinnedRoutes = getPinnedRoutes<OpenApiRoute>(context);
+            }
 
             if (!this._routes.length) {
                 updateStatusBar('no-spec');
@@ -38,6 +42,9 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
         this.groupedRoutes = groupRoutesByTag(spec);
         this._onDidChangeTreeData.fire(undefined);
         this._routes = Object.values(this.groupedRoutes).flat();
+        if (this._extensionContext) {
+            this._pinnedRoutes = getPinnedRoutes<OpenApiRoute>(this._extensionContext);
+        }
 
         if (!this._routes.length) {
             updateStatusBar('no-spec');
@@ -47,6 +54,9 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
     }
 
     refresh(): void {
+        if (this._extensionContext) {
+            this._pinnedRoutes = getPinnedRoutes<OpenApiRoute>(this._extensionContext);
+        }
         this._onDidChangeTreeData.fire(undefined);
     }
 
@@ -75,19 +85,11 @@ export class RouteTreeProvider implements vscode.TreeDataProvider<RouteTreeItem>
             return Promise.resolve(topLevelGroups);
         }
 
-        // const selected = this._extensionContext?.workspaceState.get<OpenApiRoute>('callsign.selectedRoute');
-
         // If expanding Favorites
         if (element.label === 'Pinned') {
             if (this._extensionContext) {
-                const pinned = getPinnedRoutes(this._extensionContext);
-
-                const pinnedRoutes = this._routes.filter(route =>
-                    pinned.some(p => p.method === route.method && p.path === route.path),
-                );
-
                 return Promise.resolve(
-                    pinnedRoutes.map(route => {
+                    this._pinnedRoutes.map(route => {
                         const item = new RouteTreeItem(
                             `${route.method.toUpperCase()} ${route.path}`,
                             vscode.TreeItemCollapsibleState.None,

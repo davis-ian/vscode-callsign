@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { logInfo } from '../core/logger';
+import { getLastSelectedSpecUrl } from '../state/workspace';
 
 export function getWebviewContent(
     webview: vscode.Webview,
@@ -11,9 +12,7 @@ export function getWebviewContent(
 
     logInfo('IS DEV: ', isDev);
     // Get the last selected spec URL from context if available
-    const lastSelectedSpecUrl: string | null = context
-        ? context.workspaceState.get<string>('callsign.lastSelectedSpecUrl') ?? null
-        : null;
+    const lastSelectedSpecUrl: string | null = context ? getLastSelectedSpecUrl(context) ?? null : null;
 
     if (isDev) {
         return getDevServerHtml(lastSelectedSpecUrl);

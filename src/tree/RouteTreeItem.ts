@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import type { OpenApiRoute } from '../types';
-import { isPinned } from '../core/pinnedRoutes';
-import { logInfo } from '../core/logger';
+import { isPinned } from '../state/workspace';
 
 export class RouteTreeItem extends vscode.TreeItem {
     public readonly route?: OpenApiRoute;

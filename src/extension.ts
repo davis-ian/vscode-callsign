@@ -12,6 +12,8 @@ import { initStatusBar, updateStatusBar } from './core/statusBar';
 import { initLogger, logInfo } from './core/logger';
 import { initRequestHistoryService, loadHistory } from './services/HistoryService';
 import { RequestHistoryProvider } from './tree/RequestHistoryProvider';
+import { initializeCallsignStorage } from './state/init';
+import { getCachedSpec, getLastSelectedSpecUrl, setSelectedRoute } from './state/workspace';
 
 let currentSpec: OpenApiSpec | undefined;
 let routeTreeProvider: RouteTreeProvider;
@@ -22,8 +24,8 @@ export let historyTreeProvider: RequestHistoryProvider;
 export async function activate(context: vscode.ExtensionContext) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
-
     initLogger();
+    initializeCallsignStorage(context);
     logInfo('Callsign extension activated');
 
     initStatusBar(context);
@@ -44,15 +46,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
 // This method is called when your extension is deactivated
 export function deactivate(context: vscode.ExtensionContext) {
-    context.workspaceState.update('callsign.selectedRoute', undefined);
-    routeTreeProvider.refresh();
-    historyTreeProvider.refresh();
+    setSelectedRoute(context, undefined);
+    routeTreeProvider?.refresh();
+    historyTreeProvider?.refresh();
 }
 
 async function loadDefaultJson(context: vscode.ExtensionContext): Promise<OpenApiSpec | undefined> {
     // const defaultSpecDataUrl = 'https://petstore3.swagger.io/api/v3/openapi.json';
-    const lastSelectedSpecUrl = context.workspaceState.get<string>('callsign.lastSelectedSpecUrl');
-    const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
+    const lastSelectedSpecUrl = getLastSelectedSpecUrl(context);
+    const cachedSpec = getCachedSpec<OpenApiSpec>(context);
 
     if (cachedSpec) {
         logInfo('returning cached spec for: ', lastSelectedSpecUrl);

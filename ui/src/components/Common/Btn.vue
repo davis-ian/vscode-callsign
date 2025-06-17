@@ -49,7 +49,7 @@ const variantClass = computed(() => {
         {
             primary: 'bg-vs-bbg text-vs-bfg hover:brightness-110',
             secondary: 'bg-vs-ibg text-vs-ifg hover:brightness-110',
-            outlined: 'bg-transparent border border-vs-bfg text-vs-bfg hover:bg-vs-bbg hover:text-vs-bfg',
+            outlined: 'bg-transparent border   hover:brightness-110 ',
         }[props.variant] || ''
     );
 });

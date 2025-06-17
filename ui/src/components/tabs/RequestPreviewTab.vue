@@ -1,6 +1,7 @@
 <template>
     <div>
         <!-- <p class="text-sm mb-2 text-vs-efg/70 uppercase">Request Preview</p> -->
+        <Btn variant="outlined" @click="copyToClipboard(curlCommand)">Copy</Btn>
         <pre
             class="text-xs p-3 bg-vs-ibg border rounded font-mono whitespace-pre-wrap break-all"
         ><code>{{ curlCommand }}</code></pre>
@@ -11,6 +12,7 @@
 import type { OpenApiRoute } from '@/types';
 import { extensionBridge } from '@/services/ExtensionBridge';
 import { onMounted, ref } from 'vue';
+import Btn from '../Common/Btn.vue';
 
 const props = defineProps<{
     route: OpenApiRoute;
@@ -36,6 +38,11 @@ async function triggerCurlBuilder() {
     if (resp?.curl) {
         curlCommand.value = resp.curl;
     }
+}
+
+async function copyToClipboard(val: string) {
+    await navigator.clipboard.writeText(val);
+    await extensionBridge.toast('Copied to clipboard');
 }
 
 onMounted(() => {

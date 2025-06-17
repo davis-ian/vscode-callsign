@@ -18,5 +18,4 @@ node_modules/
 **/*.ts
 **/*.map
 tests/
-ui/**
 !ui-dist/**

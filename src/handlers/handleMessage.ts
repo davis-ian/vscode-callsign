@@ -6,6 +6,8 @@ import { LogLevel, OpenApiRoute, OpenApiSpec } from '../types';
 import { buildCurl, resolveServerUrl } from '../utils/curlBuilder';
 import { logDebug, logError, logInfo } from '../core/logger';
 import { addSnapshot, clearHistory, loadHistory } from '../services/HistoryService';
+import { getSpecUrls, setSpecUrls } from '../state/global';
+import { getCachedSpec, getLastSelectedSpecUrl, getSelectedAuthId, getSelectedRoute } from '../state/workspace';
 
 export async function handleMessage(
     message: any,
@@ -20,9 +22,10 @@ export async function handleMessage(
         let data;
 
         switch (command) {
-            case 'generateCode':
+            case 'generateCode': {
                 data = await generateCode(payload);
                 break;
+            }
 
             case 'storeAuth': {
                 const authPayload = payload || message.payload;
@@ -45,22 +48,25 @@ export async function handleMessage(
                 break;
             }
 
-            case 'getAllCredentials':
+            case 'getAllCredentials': {
                 data = await authService.getAllCredentials();
                 break;
+            }
 
-            case 'clearAllCreds':
+            case 'clearAllCreds': {
                 await authService.clearAllCredentials();
                 data = { success: true };
 
                 break;
-            case 'getCredentialById':
+            }
+            case 'getCredentialById': {
                 const id = payload?.id || message.id;
                 data = await authService.getCredential(id);
 
                 break;
+            }
 
-            case 'getAuthHeader':
+            case 'getAuthHeader': {
                 const credId = payload.credentialId;
                 const credential = await authService.getCredential(credId);
                 if (credential) {
@@ -72,48 +78,47 @@ export async function handleMessage(
                     data = null;
                 }
                 break;
+            }
 
-            case 'getAllSpecUrls':
-                data = context.globalState.get('callsign.specUrls', []);
+            case 'getAllSpecUrls': {
+                data = getSpecUrls(context);
                 break;
+            }
 
             case 'saveSpecUrl': {
                 // Explicitly type the destructured values and scope them in a block
                 const specPayload = payload as { name: string; url: string };
                 const { name: specName, url: specUrl } = specPayload;
 
-                const specUrls = context.globalState.get<
-                    Array<{ id: string; name: string; url: string; createdAt: string }>
-                >('callsign.specUrls', []);
+                const specUrls = getSpecUrls(context);
 
-                const newSpec = {
-                    id: `spec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    name: specName,
-                    url: specUrl,
-                    createdAt: new Date().toISOString(),
-                };
+                // const newSpec = {
+                //     id: `spec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                //     name: specName,
+                //     url: specUrl,
+                //     createdAt: new Date().toISOString(),
+                // };
 
-                specUrls.push(newSpec);
-                await context.globalState.update('callsign.specUrls', specUrls);
-                data = newSpec;
+                specUrls.push(specUrl);
+                await setSpecUrls(context, specUrls);
+                data = specUrl;
                 break;
             }
 
             case 'deleteSpecUrl': {
-                const deletePayload = payload as { id: string };
-                const deleteId = deletePayload.id;
-                const allSpecs = context.globalState.get<
-                    Array<{ id: string; name: string; url: string; createdAt: string }>
-                >('callsign.specUrls', []);
-                const filteredSpecs = allSpecs.filter(spec => spec.id !== deleteId);
-                await context.globalState.update('callsign.specUrls', filteredSpecs);
+                const deletePayload = payload as { url: string };
+
+                const allSpecs = getSpecUrls(context);
+                const filteredSpecs = allSpecs.filter(spec => spec !== deletePayload.url);
+                setSpecUrls(context, filteredSpecs);
                 data = filteredSpecs.length !== allSpecs.length; // true if deleted
                 break;
             }
 
-            case 'getLastSelectedSpecUrl':
-                data = context.workspaceState.get('callsign.lastSelectedSpecUrl', null);
+            case 'getLastSelectedSpecUrl': {
+                getLastSelectedSpecUrl(context);
                 break;
+            }
 
             case 'saveLastSelectedSpecUrl': {
                 const urlPayload = payload as { urlId: string };
@@ -123,62 +128,67 @@ export async function handleMessage(
                 break;
             }
 
-            case 'makeRequest':
+            case 'makeRequest': {
                 data = await makeAuthenticatedRequest(payload, authService);
                 break;
+            }
 
-            case 'vueAppReady':
-                {
-                    logInfo('vue app ready', initialVueRoute);
-                    const lastSelectedSpecUrl = context.workspaceState.get<string>('callsign.lastSelectedSpecUrl');
-                    const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
-                    const selectedRoute = context.workspaceState.get<OpenApiRoute | null>('callsign.selectedRoute');
-                    const authIdDown = context.workspaceState.get<string>('callsign.selectedAuthId');
+            case 'vueAppReady': {
+                logInfo('vue app ready', initialVueRoute);
+                const lastSelectedSpecUrl = getLastSelectedSpecUrl(context);
+                const cachedSpec = getCachedSpec(context);
+                const selectedRoute = getSelectedRoute(context);
+                const authIdDown = getSelectedAuthId(context);
 
-                    data = {
-                        selectedSpecUrl: lastSelectedSpecUrl || null,
-                        openApiSpec: cachedSpec,
-                        selectedRoute: selectedRoute,
-                        selectedAuthId: authIdDown,
-                        initialVueRoute: initialVueRoute,
-                    };
-                }
+                data = {
+                    selectedSpecUrl: lastSelectedSpecUrl || null,
+                    openApiSpec: cachedSpec,
+                    selectedRoute: selectedRoute,
+                    selectedAuthId: authIdDown,
+                    initialVueRoute: initialVueRoute,
+                };
 
                 break;
+            }
 
-            case 'buildCurl':
-                {
-                    const cachedSpec = context.workspaceState.get<OpenApiSpec | null>('callsign.cachedSpec', null);
+            case 'buildCurl': {
+                const cachedSpec = getCachedSpec<OpenApiSpec>(context);
 
-                    const { route, inputData } = payload;
+                const { route, inputData } = payload;
 
-                    if (!route) return;
+                if (!route) return;
 
-                    const specUrl = cachedSpec?.path;
-                    const serverUrl = cachedSpec?.servers?.[0]?.url ?? '/';
-                    if (!specUrl || !serverUrl) {
-                        throw new Error('Invalid  spec or server url');
-                    }
-                    const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
-                    const curl = buildCurl(route, inputData, resolvedBaseUrl);
-
-                    data = { curl };
+                const specUrl = cachedSpec?.path;
+                const serverUrl = cachedSpec?.servers?.[0]?.url ?? '/';
+                if (!specUrl || !serverUrl) {
+                    throw new Error('Invalid  spec or server url');
                 }
-                break;
+                const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+                const curl = buildCurl(route, inputData, resolvedBaseUrl);
 
-            case 'loadRequestHistory':
+                data = { curl };
+                break;
+            }
+
+            case 'loadRequestHistory': {
                 const history = loadHistory();
 
                 data = history;
                 break;
-            case 'clearRequestHistory':
-                {
-                    await clearHistory();
+            }
+            case 'clearRequestHistory': {
+                await clearHistory();
 
-                    data = { success: true };
-                }
+                data = { success: true };
                 break;
+            }
 
+            case 'toast': {
+                const { message } = payload;
+                logInfo('handling toast: ', message);
+                vscode.window.showInformationMessage(message);
+                break;
+            }
             case 'writeLog': {
                 const { level, args } = payload as { level: LogLevel; args: any[] };
 
@@ -195,6 +205,7 @@ export async function handleMessage(
                     default:
                         logInfo(...args);
                 }
+                break;
             }
 
             default:

@@ -8,16 +8,26 @@ import { RouteTreeProvider } from '../tree/RouteTreeProvider';
 import { loadJsonFromUrl } from '../utils/fetchJson';
 import { handleMessage } from '../handlers/handleMessage';
 import { getWebviewContent } from '../utils/getWebviewContent';
-import { getConfiguredSpecUrls } from '../utils/settings';
+
 import { generateCode } from './codeGenCommand';
 import { updateStatusBar } from '../core/statusBar';
-import { isPinned, togglePin } from '../core/pinnedRoutes';
 import { RouteTreeItem } from '../tree/RouteTreeItem';
 import { logInfo, showLogs } from '../core/logger';
 import { buildCurl, resolveServerUrl } from '../utils/curlBuilder';
 import { AuthService } from '../services/AuthService';
-import { match } from 'assert';
+
 import { RequestHistoryProvider } from '../tree/RequestHistoryProvider';
+import {
+    getCachedSpec,
+    getLastOutputDir,
+    isPinned,
+    setCachedSpec,
+    setLastOutputDir,
+    setLastSelectedSpecUrl,
+    setSelectedRoute,
+    togglePin,
+} from '../state/workspace';
+import { getSpecUrls, setSpecUrls } from '../state/global';
 
 let panel: vscode.WebviewPanel | undefined;
 
@@ -39,7 +49,7 @@ export function registerCommands(
         }),
 
         vscode.commands.registerCommand('callsign.openRoute', async (route: OpenApiRoute) => {
-            await context.workspaceState.update('callsign.selectedRoute', route);
+            await setSelectedRoute(context, route);
             routeTreeProvider.refresh();
 
             panel?.webview.postMessage({
@@ -79,7 +89,7 @@ export function registerCommands(
 
             panel.onDidDispose(() => {
                 panel = undefined;
-                context.workspaceState.update('callsign.selectedRoute', undefined);
+                setSelectedRoute(context, undefined);
                 routeTreeProvider.refresh();
             });
         }),
@@ -125,7 +135,7 @@ export function registerCommands(
             const lastOutputKey = 'callsign.lastOutputDir';
             try {
                 updateStatusBar('generating');
-                const savedSpecs = vscode.workspace.getConfiguration('callsign').get<Array<string>>('specUrls');
+                const savedSpecs = getSpecUrls(context);
 
                 if (!savedSpecs || savedSpecs.length === 0) {
                     vscode.window.showWarningMessage('No saved spec URLs found.');
@@ -157,7 +167,7 @@ export function registerCommands(
                 const commonOptions = ['src', 'src/generated-api', 'generated', 'api'].map(p =>
                     path.join(workspaceFolder!, p),
                 );
-                const lastUsed = context.workspaceState.get<string>(lastOutputKey);
+                const lastUsed = getLastOutputDir(context);
 
                 const folderOptions = [
                     { label: '$(arrow-left) Back', description: '', alwaysShow: true },
@@ -197,7 +207,7 @@ export function registerCommands(
                     fs.mkdirSync(outputPath, { recursive: true });
                 }
 
-                await context.workspaceState.update(lastOutputKey, outputPath);
+                await setLastOutputDir(context, outputPath);
 
                 const outputUri = await vscode.window.showOpenDialog({
                     canSelectFolders: true,
@@ -226,10 +236,7 @@ export function registerCommands(
                         });
 
                         if (response.success) {
-                            const cachedSpec = context.workspaceState.get<OpenApiSpec | null>(
-                                'callsign.cachedSpec',
-                                null,
-                            );
+                            const cachedSpec = getCachedSpec<OpenApiSpec>(context);
                             if (cachedSpec) {
                                 updateStatusBar('idle', cachedSpec.paths.length, 0);
                             }
@@ -254,11 +261,11 @@ export function registerCommands(
             });
 
             if (url) {
-                const config = vscode.workspace.getConfiguration();
-                const current = config.get<string[]>('callsign.specUrls') || [];
-                if (!current.includes(url)) {
-                    current.push(url);
-                    await config.update('callsign.specUrls', current, vscode.ConfigurationTarget.Global);
+                const configuredUrls = getSpecUrls(context);
+                if (!configuredUrls.includes(url)) {
+                    configuredUrls.push(url);
+
+                    await setSpecUrls(context, configuredUrls);
                     vscode.window.showInformationMessage(`Added ${url} to Callsign spec URLs`);
                 } else {
                     vscode.window.showWarningMessage('That URL is already added');
@@ -267,7 +274,7 @@ export function registerCommands(
         }),
 
         vscode.commands.registerCommand('callsign.deleteSpecUrlFromSettings', async () => {
-            const configuredUrls = getConfiguredSpecUrls();
+            const configuredUrls = getSpecUrls(context);
             logInfo(configuredUrls, 'fonigured urls');
 
             if (configuredUrls.length === 0) {
@@ -288,7 +295,7 @@ export function registerCommands(
 
             const updated = configuredUrls.filter(u => u !== picked.spec);
 
-            await vscode.workspace.getConfiguration('callsign').update('specUrls', updated);
+            await setSpecUrls(context, updated);
 
             vscode.window.showInformationMessage(`Deleted ${picked.spec} from Callsign spec URLs.`);
         }),
@@ -302,8 +309,7 @@ export function registerCommands(
             const route = item?.route || (await pickRouteQuickly(routeTreeProvider, 'Select a route to pin'));
             if (!route) return;
 
-            await togglePin(route, context);
-            routeTreeProvider.refresh();
+            await togglePin(route, context, routeTreeProvider);
         }),
 
         vscode.commands.registerCommand('callsign.unpinRoute', async (item: RouteTreeItem) => {
@@ -315,8 +321,7 @@ export function registerCommands(
 
             if (!route) return;
 
-            await togglePin(route, context);
-            routeTreeProvider.refresh();
+            await togglePin(route, context, routeTreeProvider);
         }),
 
         vscode.commands.registerCommand('callsign.listStoredAuth', async () => {
@@ -346,7 +351,7 @@ export function registerCommands(
         }),
 
         vscode.commands.registerCommand('callsign.loadRoutesFromSavedSpec', async () => {
-            const savedSpecs = vscode.workspace.getConfiguration('callsign').get<Array<string>>('specUrls');
+            const savedSpecs = getSpecUrls(context);
 
             if (!savedSpecs || savedSpecs.length === 0) {
                 vscode.window.showWarningMessage('No saved spec URLs found.');
@@ -363,8 +368,8 @@ export function registerCommands(
                 const rawSpec: OpenApiSpec = await loadJsonFromUrl(selected);
                 routeTreeProvider.setRoutes(rawSpec, context);
 
-                await context.workspaceState.update('callsign.lastSelectedSpecUrl', rawSpec.path);
-                await context.workspaceState.update('callsign.cachedSpec', rawSpec);
+                await setLastSelectedSpecUrl(context, rawSpec.path);
+                await setCachedSpec(context, rawSpec);
 
                 panel?.webview.postMessage({
                     command: 'syncState',

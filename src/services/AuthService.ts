@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { logInfo } from '../core/logger';
+import { getSelectedAuthId } from '../state/workspace';
 
 export interface AuthCredential {
     id: string;
@@ -17,7 +18,7 @@ export interface StoredAuth {
 }
 
 export class AuthService {
-    private static readonly CREDENTIALS_KEY = 'auth.credentials';
+    private static readonly CREDENTIALS_KEY = 'callsign.credentials';
     private context: vscode.ExtensionContext;
 
     constructor(context: vscode.ExtensionContext) {
@@ -134,7 +135,7 @@ export class AuthService {
             const updatedCredentials = credentials.filter(c => c.id !== id);
             await this.context.globalState.update(AuthService.CREDENTIALS_KEY, updatedCredentials);
 
-            const selectedId = await this.context.workspaceState.get<string>('callsign.selectedAuthId');
+            const selectedId = getSelectedAuthId(this.context);
             if (selectedId === id) {
                 await this.context.workspaceState.update('callsign.selectedAuthId', undefined);
             }

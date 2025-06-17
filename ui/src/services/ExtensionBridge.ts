@@ -15,6 +15,7 @@ import type {
     LogLevel,
     RequestSnapshot,
 } from '@/types';
+import { vsLog } from '@/utilities/extensionLogger';
 
 class ExtensionBridge {
     private vscode: any;
@@ -77,6 +78,11 @@ class ExtensionBridge {
 
     async openInFileManager(path: string): Promise<void> {
         return this.callExtension('openInFileManager', path);
+    }
+
+    async toast(message: string): Promise<void> {
+        vsLog('extension bridge toast: ', message);
+        return this.callExtension('toast', { message });
     }
 
     async vueAppReady(): Promise<any> {
