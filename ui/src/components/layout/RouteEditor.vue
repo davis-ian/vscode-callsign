@@ -7,7 +7,7 @@
             class="w-1/2"
         />
         <div class="border-r border-vs-tfg"></div>
-        <ResponsePanel :response="response" :loading="loading" class="w-1/2" />
+        <ResponsePanel :key="refreshKey" :response="response" :loading="loading" class="w-1/2" />
     </div>
 </template>
 
@@ -21,25 +21,31 @@ import type { ApiResponse } from '@/types';
 
 const specStore = useSpecStore();
 
-import { sendRequest } from '@/services/RequestService';
 import { useSpecStore } from '@/stores/spec';
-import { vsLogError } from '@/utilities/extensionLogger';
+import { vsLog, vsLogError } from '@/utilities/extensionLogger';
+import { extensionBridge } from '@/services/ExtensionBridge';
 
 const loading = ref(false);
 const response = ref<ApiResponse | null>(null);
+const refreshKey = ref(0);
 
 async function initSendRequest(requestData: any) {
     if (!specStore.selectedRoute) return;
 
+    vsLog('init request');
+
     try {
-        response.value = await sendRequest(
+        const resp = await extensionBridge.sendRequest(
             specStore.selectedRoute,
-            requestData.params,
             requestData.authHeader,
             requestData.body,
+            requestData.params,
         );
 
-        // response.value = typeof result.body === 'object' ? JSON.stringify(result.body, null, 2) : result.body;
+        vsLog('extensionBridge response', resp);
+        response.value = resp;
+        refreshKey.value++;
+        // response.value = typeof resp.body === 'object' ? JSON.stringify(resp.body, null, 2) : resp.body;
     } catch (err: any) {
         vsLogError(err, 'request error');
         response.value = err;

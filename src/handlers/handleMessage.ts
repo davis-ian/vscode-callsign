@@ -1,13 +1,14 @@
 import { generateCode } from '../commands/codeGenCommand';
-import { makeAuthenticatedRequest } from '../commands/makeAuthenticatedRequest';
+import { makeAuthenticatedRequest, sendRequest } from '../commands/makeAuthenticatedRequest';
 import { AuthService } from '../services/AuthService';
 import * as vscode from 'vscode';
 import { LogLevel, OpenApiRoute, OpenApiSpec } from '../types';
-import { buildCurl, getApiBaseUrlFromSpec, resolveServerUrl } from '../utils/curlBuilder';
+import { buildCurl, getApiBaseUrlFromSpec } from '../utils/curlBuilder';
 import { logDebug, logError, logInfo } from '../core/logger';
 import { addSnapshot, clearHistory, loadHistory } from '../services/HistoryService';
 import { getSpecUrls, setSpecUrls } from '../state/global';
 import { getCachedSpec, getLastSelectedSpecUrl, getSelectedAuthId, getSelectedRoute } from '../state/workspace';
+import { log } from 'console';
 
 export async function handleMessage(
     message: any,
@@ -17,6 +18,10 @@ export async function handleMessage(
 ) {
     const authService = new AuthService(context);
     const { command, requestId, payload } = message;
+
+    if (command != 'writeLog') {
+        logInfo('handleMessage', message);
+    }
 
     try {
         let data;
@@ -128,8 +133,26 @@ export async function handleMessage(
                 break;
             }
 
-            case 'makeRequest': {
-                data = await makeAuthenticatedRequest(payload, authService);
+            // case 'makeRequest': {
+            //     data = await makeAuthenticatedRequest(payload, authService);
+            //     break;
+            // }
+
+            case 'sendRequest': {
+                logInfo('SEND REQUEST BEING HANDLED');
+                // logInfo('send request payload in handler', payload);
+                // const { route, headers, body, params } = payload;
+                const { route, headers, body, params } = payload ?? {};
+                logInfo('handler route: ', route);
+                logInfo('handler route: ', headers);
+                logInfo('handler route: ', body);
+                logInfo('handler route: ', params);
+
+                var response = await sendRequest(context, route, params, headers, body);
+
+                logInfo('request response in handler', response);
+                data = response;
+
                 break;
             }
 
@@ -163,11 +186,21 @@ export async function handleMessage(
                 if (!specUrl || !serverUrl) {
                     throw new Error('Invalid  spec or server url');
                 }
-                // const resolvedBaseUrl = resolveServerUrl(specUrl, serverUrl);
+
                 const resolvedBaseUrl = getApiBaseUrlFromSpec(cachedSpec, specUrl);
                 const curl = buildCurl(route, inputData, resolvedBaseUrl);
 
                 data = { curl };
+                break;
+            }
+
+            case 'getApiBaseUrlFromSpec': {
+                const { spec, url } = payload;
+
+                const resolvedBaseUrl = getApiBaseUrlFromSpec(spec, url);
+
+                data = { url: resolvedBaseUrl };
+
                 break;
             }
 
@@ -190,8 +223,11 @@ export async function handleMessage(
                 vscode.window.showInformationMessage(message);
                 break;
             }
+
             case 'writeLog': {
                 const { level, args } = payload as { level: LogLevel; args: any[] };
+
+                args.unshift('[UI]');
 
                 switch (level) {
                     case 'error':
@@ -224,7 +260,7 @@ export async function handleMessage(
             panel.webview.postMessage({ command: `${command}Response`, data });
         }
     } catch (error) {
-        console.error('Extention error: ', error);
+        logError('Extention error: ', error);
 
         const errorMessage = error instanceof Error ? error.message : String(error);
 

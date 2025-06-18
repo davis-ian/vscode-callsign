@@ -1,6 +1,5 @@
 import type { SpecUrl } from '@/stores/spec';
 import type {
-    ApiEndpoint,
     ApiResponse,
     AuthCredential,
     AuthHeader,
@@ -120,13 +119,37 @@ class ExtensionBridge {
         return this.callExtension<RequestSnapshot[]>('loadRequestHistory');
     }
 
-    async makeAuthenticatedRequest(
-        endpoint: ApiEndpoint,
+    // async makeAuthenticatedRequest(
+    //     endpoint: ApiEndpoint,
+    //     headers: Record<string, string>,
+    //     body?: any,
+    //     params?: Record<string, string>,
+    // ): Promise<ApiResponse> {
+    //     return this.callExtension<ApiResponse>('makeRequest', { endpoint, headers, body, params });
+    // }
+
+    async sendRequest(
+        route: OpenApiRoute,
         headers: Record<string, string>,
         body?: any,
         params?: Record<string, string>,
     ): Promise<ApiResponse> {
-        return this.callExtension<ApiResponse>('makeRequest', { endpoint, headers, body, params });
+        vsLog('extesnionBridge send req route: ', route);
+        vsLog('extesnionBridge send req headers: ', headers);
+        vsLog('extesnionBridge send req body: ', body);
+        vsLog('extesnionBridge send req params: ', params);
+
+        const routeClone = JSON.parse(JSON.stringify(route));
+        const headersClone = JSON.parse(JSON.stringify(headers));
+        // const bodyClone = JSON.parse(JSON.stringify(body));
+        // const paramsClone = JSON.parse(JSON.stringify(params));
+
+        return this.callExtension('sendRequest', {
+            route: routeClone,
+            headers: headersClone,
+            // body: bodyClone,
+            // params: paramsClone,
+        });
     }
 
     postMessage(message: any): void {
@@ -205,6 +228,10 @@ class ExtensionBridge {
         const safeRoute = sanitizeRoute(route);
         console.log('sanitized', safeRoute);
         return this.callExtension<CurlBuildResult>('buildCurl', { route: safeRoute, inputData });
+    }
+
+    async getApiBaseUrlFromSpec(spec: OpenApiSpec, url: string): Promise<string> {
+        return this.callExtension<string>('getApiBaseUrlFromSpec', { spec, url });
     }
 
     private generateRequestId(): string {

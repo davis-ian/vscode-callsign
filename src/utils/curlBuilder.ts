@@ -78,11 +78,13 @@ export function getApiBaseUrlFromSpec(spec: any, specUrl: string): string {
             const scheme = spec.schemes?.includes('https') ? 'https' : 'http';
             const host = spec.host;
             const basePath = spec.basePath || '/';
-            return `${scheme}://${host}${basePath}`.replace(/\/+$/, ''); // Trim trailing slash
+            return `${scheme}://${host}${basePath}`.replace(/\/+$/, '');
         }
 
-        // Fallback
-        return new URL('.', specUrl).toString().replace(/\/+$/, '');
+        // --- Custom fallback: truncate after domain ---
+        const parsed = new URL(specUrl);
+        const origin = `${parsed.protocol}//${parsed.hostname}`;
+        return origin;
     } catch {
         return specUrl;
     }

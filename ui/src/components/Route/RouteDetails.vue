@@ -46,6 +46,8 @@
 </template>
 
 <script setup lang="ts">
+import { vsLog } from '@/utilities/extensionLogger';
+
 import { ref, computed } from 'vue';
 
 const props = defineProps<{
@@ -61,30 +63,31 @@ const response = ref('');
 const hasBody = computed(() => props.operation.requestBody?.content?.['application/json']);
 
 async function sendRequest() {
-    const path = props.route.replace(/{(.*?)}/g, (_, name) => paramInputs.value[name] || `{${name}}`);
-    const url = `https://api-develop.memoryshare.com${path}`;
+    vsLog('Invalid request method used');
+    // const path = props.route.replace(/{(.*?)}/g, (_, name) => paramInputs.value[name] || `{${name}}`);
+    // const url = `https://api-develop.memoryshare.com${path}`;
 
-    const init: RequestInit = {
-        method: props.method.toUpperCase(),
-        headers: { 'Content-Type': 'application/json' },
-    };
+    // const init: RequestInit = {
+    //     method: props.method.toUpperCase(),
+    //     headers: { 'Content-Type': 'application/json' },
+    // };
 
-    if (hasBody.value && bodyInput.value.trim()) {
-        try {
-            init.body = JSON.stringify(JSON.parse(bodyInput.value));
-        } catch {
-            response.value = '❌ Invalid JSON body';
-            return;
-        }
-    }
+    // if (hasBody.value && bodyInput.value.trim()) {
+    //     try {
+    //         init.body = JSON.stringify(JSON.parse(bodyInput.value));
+    //     } catch {
+    //         response.value = '❌ Invalid JSON body';
+    //         return;
+    //     }
+    // }
 
-    try {
-        const res = await fetch(url, init);
-        const data = await res.json();
-        response.value = JSON.stringify(data, null, 2);
-    } catch (err: any) {
-        response.value = `❌ Error: ${err.message}`;
-    }
+    // try {
+    //     const res = await fetch(url, init);
+    //     const data = await res.json();
+    //     response.value = JSON.stringify(data, null, 2);
+    // } catch (err: any) {
+    //     response.value = `❌ Error: ${err.message}`;
+    // }
 }
 </script>
 

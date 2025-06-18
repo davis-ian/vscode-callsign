@@ -13,7 +13,7 @@ import { generateCode } from './codeGenCommand';
 import { updateStatusBar } from '../core/statusBar';
 import { RouteTreeItem } from '../tree/RouteTreeItem';
 import { logInfo, showLogs } from '../core/logger';
-import { buildCurl, getApiBaseUrlFromSpec, resolveServerUrl } from '../utils/curlBuilder';
+import { buildCurl, getApiBaseUrlFromSpec } from '../utils/curlBuilder';
 import { AuthService } from '../services/AuthService';
 
 import { RequestHistoryProvider } from '../tree/RequestHistoryProvider';
@@ -387,7 +387,10 @@ export function registerCommands(
                     });
                 }
 
-                if (!selected) return;
+                if (!selected) {
+                    vscode.window.showWarningMessage('spec url not found');
+                    return;
+                }
 
                 await loadSpecFromUrl(selected, routeTreeProvider, context);
 
