@@ -5,10 +5,9 @@ import * as vscode from 'vscode';
 import { LogLevel, OpenApiRoute, OpenApiSpec } from '../types';
 import { buildCurl, getApiBaseUrlFromSpec } from '../utils/curlBuilder';
 import { logDebug, logError, logInfo } from '../core/logger';
-import { addSnapshot, clearHistory, loadHistory } from '../services/HistoryService';
+import { clearHistory, loadHistory } from '../services/HistoryService';
 import { getSpecUrls, setSpecUrls } from '../state/global';
 import { getCachedSpec, getLastSelectedSpecUrl, getSelectedAuthId, getSelectedRoute } from '../state/workspace';
-import { log } from 'console';
 
 export async function handleMessage(
     message: any,
@@ -142,7 +141,7 @@ export async function handleMessage(
                 logInfo('SEND REQUEST BEING HANDLED');
                 // logInfo('send request payload in handler', payload);
                 // const { route, headers, body, params } = payload;
-                const { route, headers, body, params } = payload ?? {};
+                const { route, headers, body, params } = payload;
                 logInfo('handler route: ', route);
                 logInfo('handler route: ', headers);
                 logInfo('handler route: ', body);

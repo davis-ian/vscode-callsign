@@ -141,14 +141,14 @@ class ExtensionBridge {
 
         const routeClone = JSON.parse(JSON.stringify(route));
         const headersClone = JSON.parse(JSON.stringify(headers));
-        // const bodyClone = JSON.parse(JSON.stringify(body));
-        // const paramsClone = JSON.parse(JSON.stringify(params));
+        const bodyClone = JSON.parse(JSON.stringify(body));
+        const paramsClone = JSON.parse(JSON.stringify(params));
 
         return this.callExtension('sendRequest', {
             route: routeClone,
             headers: headersClone,
-            // body: bodyClone,
-            // params: paramsClone,
+            body: bodyClone,
+            params: paramsClone,
         });
     }
 

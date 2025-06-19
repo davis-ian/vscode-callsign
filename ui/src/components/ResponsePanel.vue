@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col h-full">
+    <div class="flex flex-col h-full max-h-screen">
         <div class="p-4 flex-shrink-0">
             <h2 class="font-semibold">
                 Status:
@@ -18,17 +18,13 @@
                 :showMeta="false"
             />
 
-            <div class="flex-1 p-4 overflow-y-auto">
-                <div v-if="activeTab == 'body'">
-                    <pre
-                        class="overflow-x-auto p-2 flex-grow max-h-130 text-xs border rounded"
-                    ><code>{{ response?.body }}</code></pre>
+            <div v-if="response" class="flex-1 p-4 overflow-y-auto">
+                <div class="h-full" v-if="activeTab == 'body'">
+                    <CodeBlock :content="response?.body" />
                 </div>
 
                 <div v-if="activeTab == 'headers'">
-                    <pre
-                        class="overflow-x-auto p-2 flex-grow max-h-150 text-xs"
-                    ><code>{{ response?.headers }}</code></pre>
+                    <CodeBlock :content="response?.headers" />
                 </div>
             </div>
         </div>
@@ -40,6 +36,7 @@ import type { ApiResponse } from '@/types';
 import { getStatusColorClass } from '@/utilities/dynamicColors';
 import ResponseTabs from './ResponseTabs.vue';
 import { ref } from 'vue';
+import CodeBlock from './CodeBlock.vue';
 
 defineProps<{
     response: ApiResponse | null;

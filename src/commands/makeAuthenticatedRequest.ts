@@ -11,7 +11,7 @@ export async function makeAuthenticatedRequest(
     route: OpenApiRoute,
     headers: Record<string, string>,
     body?: any,
-    params?: Record<string, string>,
+    params: Record<string, string> = {},
 ): Promise<ApiResponse> {
     logInfo('MAKE AUTH REQUEST INIT');
 
@@ -21,14 +21,12 @@ export async function makeAuthenticatedRequest(
         throw new Error('Invalid  spec or server url');
     }
 
-    let path = route.path;
+    const path = route.path.replace(/{(.+?)}/g, (_match, name) => params[name] || `{${name}}`);
 
-    // const path = route.path.replace(/{(.+?)}/g, (_match, name) => paramInputs[name] || `{${name}}`);
-
-    if (params && Object.keys(params).length > 0) {
-        const searchParams = new URLSearchParams(params);
-        path += (path.includes('?') ? '&' : '?') + searchParams.toString();
-    }
+    // if (params && Object.keys(params).length > 0) {
+    //     const searchParams = new URLSearchParams(params);
+    //     path += (path.includes('?') ? '&' : '?') + searchParams.toString();
+    // }
 
     const resolvedBaseUrl = getApiBaseUrlFromSpec(currentSpec, currentSpec.path);
 
@@ -130,6 +128,7 @@ export async function sendRequest(
     authHeader?: { key: string; value: string },
     bodyInput?: string,
 ): Promise<ApiResponse> {
+    logInfo('SENDING REQUEST', paramInputs);
     const hasBody = route.details?.requestBody?.content?.['application/json'];
 
     // Build query parameters

@@ -584,9 +584,17 @@ async function showAuthQuickPick(authService: AuthService, context: vscode.Exten
             const value = await vscode.window.showInputBox({ prompt: 'Enter header value', password: false });
 
             if (key && value) {
-                await authService.storeCredential({ name: key, key }, value);
+                const newAuthId = await authService.storeCredential({ name: key, key }, value);
 
                 vscode.window.showInformationMessage(`Saved ${key}`);
+
+                const success = await authService.setActiveCredential(newAuthId);
+                if (success) {
+                    panel?.webview.postMessage({
+                        command: 'syncState',
+                        selectedAuthId: newAuthId,
+                    });
+                }
             }
             break;
         }

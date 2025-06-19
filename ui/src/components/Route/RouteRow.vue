@@ -24,8 +24,4 @@ function selectRow() {
 }
 </script>
 
-<style scoped>
-pre code {
-    background-color: transparent !important;
-}
-</style>
+<style scoped></style>

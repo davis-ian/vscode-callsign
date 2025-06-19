@@ -38,9 +38,8 @@
         <!-- Response -->
         <div v-if="response" class="mt-4">
             <p class="text-lg font-semibold">Response</p>
-            <pre class="bg-vs-pbg rounded p-3 text-sm overflow-auto"
-                >{{ response }}
-            </pre>
+
+            <CodeBlock :content="response" />
         </div>
     </div>
 </template>
@@ -49,6 +48,7 @@
 import { vsLog } from '@/utilities/extensionLogger';
 
 import { ref, computed } from 'vue';
+import CodeBlock from '../CodeBlock.vue';
 
 const props = defineProps<{
     route: string;
