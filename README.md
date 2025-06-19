@@ -44,7 +44,7 @@ Whether you're building or consuming APIs, Callsign is your all-in-one:
 ## 📦 Usage
 
 1. **Open Command Palette** → `Callsign: Show Commands`
-   Or use the default shortcut: `Ctrl+Shift+c`
+   Or use the default shortcut: `ctrl+c ctrl+k`
 
 2. **Choose a spec** from saved URLs or paste a new OpenAPI spec URL
 
