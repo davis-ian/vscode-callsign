@@ -79,7 +79,7 @@ Quickly preview and share API requests:
 
 ## 💬 Suggestions?
 
-File a [GitHub issue](https://github.com/your-org/callsign/issues) or [tweet @iandavis](https://twitter.com/iandavis) to share feedback and feature requests.
+File a [GitHub issue](https://github.com/your-org/callsign/issues) to share feedback and feature requests.
 
 ---
 

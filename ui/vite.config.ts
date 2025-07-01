@@ -19,11 +19,11 @@ export default defineConfig({
     },
     server: {
         headers: {
-            'Access-Control-Allow-Origin': '*', // ← critical for loading inside VS Code webview
+            'Access-Control-Allow-Origin': '*',
             'Cross-Origin-Embedder-Policy': 'require-corp',
             'Cross-Origin-Opener-Policy': 'same-origin',
         },
-        cors: true, // optional but explicit
-        origin: 'http://localhost:5173', // helps with dev tools clarity
+        cors: true,
+        origin: 'http://localhost:5173',
     },
 });
