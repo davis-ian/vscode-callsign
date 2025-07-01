@@ -23,14 +23,11 @@ export async function makeAuthenticatedRequest(
 
     const path = route.path.replace(/{(.+?)}/g, (_match, name) => params[name] || `{${name}}`);
 
-    // if (params && Object.keys(params).length > 0) {
-    //     const searchParams = new URLSearchParams(params);
-    //     path += (path.includes('?') ? '&' : '?') + searchParams.toString();
-    // }
-
+    const queryString = buildQueryString(route, params);
     const resolvedBaseUrl = getApiBaseUrlFromSpec(currentSpec, currentSpec.path);
+    const finalPath = queryString ? `${path}?${queryString}` : path;
 
-    const finalUrl = `${resolvedBaseUrl}${path}`;
+    const finalUrl = `${resolvedBaseUrl}${finalPath}`;
     const method = route.method.toUpperCase();
     const finalBody = body && method !== 'GET' ? JSON.stringify(body) : undefined;
 
@@ -178,4 +175,39 @@ export async function sendRequest(
     const result = await makeAuthenticatedRequest(context, route, headers, body, rawParams);
 
     return result;
+}
+
+function buildQueryString(route: OpenApiRoute, params: Record<string, string>): string {
+    const queryParams = new URLSearchParams();
+
+    if (route.details?.parameters) {
+        for (const param of route.details.parameters) {
+            if (param.in === 'query' && params[param.name]) {
+                const value = params[param.name];
+
+                const isArray = param.schema?.type === 'array' || param.schema?.items;
+
+                if (isArray) {
+                    let arrayValues: string[] = [];
+
+                    try {
+                        const parsed = JSON.parse(value);
+                        if (Array.isArray(parsed)) {
+                            arrayValues = parsed.map(v => String(v));
+                        } else {
+                            arrayValues = [String(parsed)];
+                        }
+                    } catch {
+                        arrayValues = value.includes(',') ? value.split(',').map(v => v.trim()) : [value];
+                    }
+
+                    arrayValues.forEach(val => queryParams.append(param.name, val));
+                } else {
+                    queryParams.append(param.name, value);
+                }
+            }
+        }
+    }
+
+    return queryParams.toString();
 }

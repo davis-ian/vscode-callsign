@@ -143,9 +143,9 @@ export async function handleMessage(
                 // const { route, headers, body, params } = payload;
                 const { route, headers, body, params } = payload;
                 logInfo('handler route: ', route);
-                logInfo('handler route: ', headers);
-                logInfo('handler route: ', body);
-                logInfo('handler route: ', params);
+                logInfo('handler headers: ', headers);
+                logInfo('handler body: ', body);
+                logInfo('handler params: ', params);
 
                 var response = await sendRequest(context, route, params, headers, body);
 
