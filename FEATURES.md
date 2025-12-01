@@ -1,10 +1,10 @@
-# ✨ Callsign Features
+#  Callsign Features
 
 Callsign is a developer-first OpenAPI explorer and HTTP client built natively for VS Code. It eliminates the need to leave your editor when working with REST APIs by providing fast, keyboard-friendly tooling for reading specs, making requests, and generating code.
 
 ---
 
-## 🔍 API Explorer
+##  API Explorer
 
 Explore your OpenAPI schema interactively within VS Code:
 
@@ -15,7 +15,7 @@ Explore your OpenAPI schema interactively within VS Code:
 
 ---
 
-## ⚡️ Built-In API Client
+##  Built-In API Client
 
 Callsign includes a native request runner panel:
 
@@ -26,7 +26,7 @@ Callsign includes a native request runner panel:
 
 ---
 
-## 🧩 Code Generation
+##  Code Generation
 
 Generate client-side API code in seconds:
 
@@ -37,7 +37,7 @@ Generate client-side API code in seconds:
 
 ---
 
-## 📋 cURL Preview & Export
+##  cURL Preview & Export
 
 Quickly preview and share API requests:
 
@@ -48,7 +48,7 @@ Quickly preview and share API requests:
 
 ---
 
-## 🔐 Auth Header Management
+##  Auth Header Management
 
 -   **Save Auth Credentials** – Store headers securely with VS Code’s secrets API.
 -   **Quick Switch Between Tokens** – Pick active credentials from a Command Palette menu.
@@ -56,20 +56,20 @@ Quickly preview and share API requests:
 
 ---
 
-## 🧠 Keyboard-Friendly UX
+##  Keyboard-Friendly UX
 
 -   **Command Palette-First Design**
 -   Trigger any major action (`Search Routes`, `Run Request`, `Generate Code`, etc.) via `Cmd+Shift+P` / `Ctrl+Shift+P`.
 
 ---
 
-## 🧪 Upcoming Features (Planned)
+##  Upcoming Features (Planned)
 
 -   [ ] Mock server generation for frontend development
 
 ---
 
-## 🔧 Developer Experience
+##  Developer Experience
 
 -   Built with native VS Code APIs
 -   Designed for fast iteration and keyboard-first workflows
@@ -77,7 +77,7 @@ Quickly preview and share API requests:
 
 ---
 
-## 💬 Suggestions?
+##  Suggestions?
 
 File a [GitHub issue](https://github.com/your-org/callsign/issues) to share feedback and feature requests.
 

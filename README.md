@@ -332,7 +332,7 @@ See [DEVELOPMENT.md](./DEVELOPMENT.md) for detailed instructions on:
 
 ## License
 
-[Specify your license here]
+MIT License - see [LICENSE](LICENSE) file for details
 
 ## Author
 
