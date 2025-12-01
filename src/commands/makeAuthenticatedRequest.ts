@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import * as vscode from 'vscode';
 import { getApiBaseUrlFromSpec } from '../utils/curlBuilder';
 import { getCachedSpec } from '../state/workspace';
+import https from 'https';
+import axios from 'axios';
 
 export async function makeAuthenticatedRequest(
     context: vscode.ExtensionContext,
@@ -39,26 +41,32 @@ export async function makeAuthenticatedRequest(
         body: finalBody,
     });
 
-    const response = await fetch(finalUrl, {
+    const isLocalhost = finalUrl.includes('localhost') || finalUrl.includes('127.0.0.1');
+
+    const response = await axios({
         method,
+        url: finalUrl,
         headers,
-        body: body && method !== 'GET' ? JSON.stringify(body) : undefined,
+        data: body && method !== 'GET' ? body : undefined,
+        httpsAgent: isLocalhost ? new https.Agent({ rejectUnauthorized: false }) : undefined,
+        validateStatus: () => true,
+        transformResponse: [(data) => data]
     });
 
     const responseHeaders: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
+    Object.entries(response.headers).forEach(([key, value]) => {
+        responseHeaders[key] = String(value);
     });
 
     let responseBody;
 
     try {
-        const text = await response.text();
+        const text = response.data;
         // logInfo('Raw response text:', text);
 
         if (!text || text.trim() === '') {
             // Empty response - create a meaningful error message
-            if (!response.ok) {
+            if (response.status >= 400) {
                 responseBody = {
                     error: `HTTP ${response.status}`,
                     message: response.statusText || 'Request failed',
@@ -69,7 +77,7 @@ export async function makeAuthenticatedRequest(
             }
         } else {
             // Try to parse as JSON first
-            const contentType = response.headers.get('content-type');
+            const contentType = response.headers['content-type'];
             if (contentType?.includes('application/json')) {
                 try {
                     responseBody = JSON.parse(text);

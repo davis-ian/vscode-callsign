@@ -1,15 +1,25 @@
+import { stringify } from 'querystring';
+import { logDebug, logInfo } from '../core/logger';
 import { updateStatusBar } from '../core/statusBar';
 import { OpenApiRoute, OpenApiSpec } from '../types';
+import axios from 'axios';
+import https from 'https';
 
 export async function loadJsonFromUrl(url: string) {
-    const response = await fetch(url);
+  try {
 
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
+    logDebug('fetching json from ', url)
 
-    const jsonData = await response.json();
-    let result = jsonData as OpenApiSpec;
+    const isLocalhost = url.includes('localhost') || url.includes('127.0.0.1');
+
+    logDebug('is local host: ', isLocalhost)
+
+    const response = await axios.get(url, {
+        httpsAgent: isLocalhost ? new https.Agent({ rejectUnauthorized: false }) : undefined
+    });
+
+
+    let result = response.data as OpenApiSpec;
     result.path = url;
 
     let pinnedRoutes = [];
@@ -18,6 +28,9 @@ export async function loadJsonFromUrl(url: string) {
     updateStatusBar('idle', totalRoutes, pinnedRoutes.length);
 
     return result;
+  } catch (error) {
+    logDebug('Error fetching json', errorToString(error))
+  }
 }
 
 export function groupRoutesByTag(spec: OpenApiSpec): Record<string, OpenApiRoute[]> {
@@ -71,4 +84,26 @@ export function flattenOpenApiPaths(spec: OpenApiSpec): OpenApiRoute[] {
     }
 
     return routes;
+}
+
+
+
+function errorToString(err: any): string {
+    if (!err) return 'Unknown error';
+
+    if (err instanceof Error) {
+        let msg = `${err.name}: ${err.message}`;
+
+        if (err.cause) {
+            msg += `\nCause: ${JSON.stringify(err.cause, null, 2)}`;
+        }
+
+        if (err.stack) {
+            msg += `\nStack:\n${err.stack}`;
+        }
+
+        return msg;
+    }
+
+    return stringify(err);
 }

@@ -663,7 +663,9 @@ async function showAuthQuickPick(authService: AuthService, context: vscode.Exten
 }
 
 async function loadSpecFromUrl(url: string, provider: RouteTreeProvider, context: vscode.ExtensionContext) {
-    const rawSpec: OpenApiSpec = await loadJsonFromUrl(url);
+    const rawSpec: OpenApiSpec | undefined = await loadJsonFromUrl(url);
+
+    if (!rawSpec) return
     provider.setRoutes(rawSpec, context);
 
     await setLastSelectedSpecUrl(context, rawSpec.path);

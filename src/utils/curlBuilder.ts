@@ -83,7 +83,7 @@ export function getApiBaseUrlFromSpec(spec: any, specUrl: string): string {
 
         // --- Custom fallback: truncate after domain ---
         const parsed = new URL(specUrl);
-        const origin = `${parsed.protocol}//${parsed.hostname}`;
+        const origin = `${parsed.protocol}//${parsed.host}`; // Changed from parsed.hostname to parsed.host
         return origin;
     } catch {
         return specUrl;
