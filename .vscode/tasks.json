@@ -43,6 +43,17 @@
         },
 		{
 			"type": "npm",
+			"script": "dev",
+			"problemMatcher": [],
+			"isBackground": true,
+			"label": "npm: dev",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			}
+		},
+		{
+			"type": "npm",
 			"script": "watch-tests",
 			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
